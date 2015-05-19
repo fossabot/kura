@@ -58,6 +58,7 @@ import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.configuration.ConfigurationService;
 import org.eclipse.kura.configuration.KuraConfigReadyEvent;
 import org.eclipse.kura.configuration.Password;
+import org.eclipse.kura.core.util.ValidationUtil;
 import org.eclipse.kura.crypto.CryptoService;
 import org.eclipse.kura.ssl.SslManagerService;
 import org.eclipse.kura.ssl.SslServiceListener;
@@ -586,7 +587,7 @@ public class SslManagerServiceImpl implements SslManagerService, ConfigurableCom
 
 	private char[] getKeyStorePassword() throws InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, IOException 
 	{
-		return m_cryptoService.getKeyStorePassword(m_options.getSslTrustStore());
+		return (char[]) m_properties.get(SslManagerServiceOptions.PROP_TRUST_PASSWORD); //m_cryptoService.getKeyStorePassword(m_options.getSslTrustStore());
 	}
 
 	private boolean verifyEnvironmentProperties(char[] newPassword){

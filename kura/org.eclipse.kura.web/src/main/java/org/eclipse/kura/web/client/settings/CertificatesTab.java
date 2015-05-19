@@ -130,7 +130,7 @@ public class CertificatesTab extends LayoutContainer {
 
 						public void onSuccess(Integer certsStored) {
 							m_publicCertificate.clear();
-
+							m_storagePassword.clear();
 							Info.display(MSGS.info(), "Storage success. Stored " + certsStored + " public certificate(s).");
 							m_commandInput.unmask();
 						}
