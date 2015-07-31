@@ -37,25 +37,65 @@ public class ModbusProtocolSlaveImpl implements ModbusProtocol{
 	}
 
 	@Override
-	public byte[] readHoldingRegisters(int unitAddr, int dataAddress, int count)
+	public byte[] readHoldingRegisters(int unitAddr, int dataAddress, int count, ModbusSlavePreferences msp)
 			throws ModbusProtocolException {
-		// TODO Auto-generated method stub
+		s_logger.info("Received readHoldingRegisters request from Master");
 		int[] data=new int[15];
-		data[0] = 30000; //Power Out [W]
-		data[1] = 60000; //Time to recharge [s]
-		data[2] = 30000; //Energy Out [Wh]
-		data[3] = 15000; //Power PV Out [W]
-		data[4] = 0 + (1 << 1) + (1 << 2) + (1 << 3) + (1 << 4) + (1 << 5) + (1 << 6); //Status flag
-		data[5] = 0; //Fault String 1
-		data[6] = 0; //Fault String 2
-		data[7] = 50; //IGBT_temp [°C]
-		data[8] = 20; //Storage temp [°C]
-		data[9] = 50; //Storage battery SOC [%]
-		data[10] = 380; //V_Out [V]
-		data[11] = 400; //Storage_Battery_V [V]
-		data[12] = 500; //PV_System_V [V]
-		data[13] = 75; //I_Out [A]
-		data[14] = 90; //Storage_Battery_I [A]
+		data[0] = msp.getPowerOut(); //Power Out [W]
+		data[1] = msp.getTimeToRecharge(); //Time to recharge [s]
+		data[2] = msp.getEnergyOut(); //Energy Out [Wh]
+		data[3] = msp.getPowerOut(); //Power PV Out [W]
+		
+		int faultFlag= msp.isFaultFlag() ? 1 : 0;
+		int rechargeAvailable= msp.isRechargeAvailable() ? 1 : 0;
+		int rechargeInProgress= msp.isRechargeInProgress() ? 1 : 0;
+		int pvSystemActive= msp.isPvSystemActive() ? 1 : 0;
+		int auxChargerActive= msp.isAuxChargerActive() ? 1 : 0;
+		int storageBatteryContractorStatus= msp.isStorageBatteryContactorStatus() ? 1 : 0;
+		int converterContractorStatus= msp.isConverterContactorStatus() ? 1 : 0;
+		data[4] = faultFlag 
+				+ (rechargeAvailable << 1) 
+				+ (rechargeInProgress << 2) 
+				+ (pvSystemActive << 3) 
+				+ (auxChargerActive << 4) 
+				+ (storageBatteryContractorStatus << 5) 
+				+ (converterContractorStatus << 6); //Status flag
+		
+		data[5] = msp.getFaultString1(); //Fault String 1
+		data[6] = msp.getFaultString2(); //Fault String 2
+		data[7] = msp.getIgbtTemp(); //IGBT_temp [°C]
+		data[8] = msp.getStorageTemp(); //Storage temp [°C]
+		data[9] = msp.getStorageBatterySoc(); //Storage battery SOC [%]
+		data[10] = msp.getvOut(); //V_Out [V]
+		data[11] = msp.getStorageBatteryV(); //Storage_Battery_V [V]
+		data[12] = msp.getPvSystemV(); //PV_System_V [V]
+		data[13] = msp.getiOut(); //I_Out [A]
+		data[14] = msp.getStorageBatteryI(); //Storage_Battery_I [A]
+		
+		s_logger.info("Preparing answer to Master: ");
+		s_logger.info("Power Out [W]: {}", data[0]);
+		s_logger.info("Time to recharge [s]: {}", data[1]);
+		s_logger.info("Energy Out [Wh]: {}", data[2]);
+		s_logger.info("Power PV Out [W]: {}", data[3]);
+		
+		s_logger.info("Status flag -> Fault_flag: {}", faultFlag);
+		s_logger.info("Status flag -> Recharge_Available: {}", rechargeAvailable);
+		s_logger.info("Status flag -> Recharge_In_Progress: {}", rechargeInProgress);
+		s_logger.info("Status flag -> PV_System_Active: {}", pvSystemActive);
+		s_logger.info("Status flag -> Aux_Charger_Active: {}", auxChargerActive);
+		s_logger.info("Status flag -> Storage_Battery_Contactor_Status: {}", storageBatteryContractorStatus);
+		s_logger.info("Status flag -> Converter_Contactor_Status: {}", converterContractorStatus);
+		
+		s_logger.info("Fault String 1: {}", data[5]);
+		s_logger.info("Fault String 2: {}", data[6]);
+		s_logger.info("IGBT_temp [°C]: {}", data[7]);
+		s_logger.info("Storage temp [°C]: {}", data[8]);
+		s_logger.info("Storage battery SOC [%]: {}", data[9]);
+		s_logger.info("V_Out [V]: {}", data[10]);
+		s_logger.info("Storage_Battery_V [V]: {}", data[11]);
+		s_logger.info("PV_System_V [V]: {}", data[12]);
+		s_logger.info("I_Out [A]: {}", data[13]);
+		s_logger.info("Storage_Battery_I [A]: {}", data[14]);
 		
 		byte[] cmd = new byte[2*count + 3];
 		cmd[0] = (byte) unitAddr;
@@ -155,7 +195,7 @@ public class ModbusProtocolSlaveImpl implements ModbusProtocol{
 		int currentDay= (data[11] & 0xFF);
 		int currentYear= buildShort(data[12], data[13]);
 		
-		s_logger.info("Slave-> startRecharge: " + startRecharge +
+		s_logger.info("Received from Master-> startRecharge: " + startRecharge +
 				" isBooked: " + isBooked + 
 				" irradiation: " + irradiation + 
 				" bookingHours: " + bookingHours +

@@ -443,7 +443,7 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 					" pVSystemV: " + pVSystemV +
 					" iOut: " + iOut +
 					" storageBatteryI: " + storageBatteryI);
-			readWrite=false;
+			//readWrite=false;
 		}else{
 			int[] data=new int[7];
 			

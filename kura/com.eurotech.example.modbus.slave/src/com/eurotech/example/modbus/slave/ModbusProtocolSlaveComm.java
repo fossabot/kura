@@ -21,6 +21,11 @@ public class ModbusProtocolSlaveComm implements Communicate, Runnable{
 	private OutputStream outStream;
 
 	private ModbusProtocol mpsl;
+	private ModbusSlavePreferences m_msp;
+	
+	public ModbusProtocolSlaveComm(ModbusSlavePreferences msp){
+		m_msp= msp;
+	}
 
 	@Override
 	public void connect() {
@@ -81,17 +86,16 @@ public class ModbusProtocolSlaveComm implements Communicate, Runnable{
 					} else {
 						s_logger.error("Socket disconnect in recv");
 						//disconnect();
-						throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE,"Recv failure");
+						throw new ModbusProtocolException(ModbusProtocolErrorCode.NOT_CONNECTED);
 					}
 				} catch (SocketTimeoutException e) {
 					String failMsg = "Recv timeout";
 					s_logger.warn(failMsg);
-					throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE,failMsg);
+					throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE);
 				} catch (IOException e) {
 					s_logger.error("Socket disconnect in recv: " + e);
 					//disconnect();
-					throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE,
-							"Recv failure");
+					throw new ModbusProtocolException(ModbusProtocolErrorCode.TRANSACTION_FAILURE);
 				}
 			}
 
@@ -159,7 +163,7 @@ public class ModbusProtocolSlaveComm implements Communicate, Runnable{
 								requestNoCRC[i] = request[i];
 							}
 							s_logger.info("Request received from master. The request is correct, needs processing.");
-							response= mpsl.readHoldingRegisters(requestNoCRC[0], address, numRegisters);
+							response= mpsl.readHoldingRegisters(requestNoCRC[0], address, numRegisters, m_msp);
 						}else {
 							response= createErrorMessage(request[0], request[1], 0x02); 
 						}

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" 
-activate="activate" 
-name="com.eurotech.example.modbus.slave.ModbusSlaveDevice"
-deactivate="deactivate">
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" configuration-policy="require" deactivate="deactivate" modified="updated" name="com.eurotech.example.modbus.slave.ModbusSlaveDevice">
    <implementation class="com.eurotech.example.modbus.slave.ModbusSlaveDevice"/>
+   <service>
+      <provide interface="com.eurotech.example.modbus.slave.ModbusSlaveDevice"/>
+   </service>
+   <property name="service.pid" type="String" value="com.eurotech.example.modbus.slave.ModbusSlaveDevice"/>
    <reference bind="setConnectionFactory" 
    			  cardinality="1..1" 
    			  interface="org.osgi.service.io.ConnectionFactory" 

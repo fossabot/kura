@@ -101,7 +101,7 @@ public interface ModbusProtocol {
 	 *             should include a protocol specific message to help clarify
 	 *             the cause of the exception
 	 */
-	public byte[] readHoldingRegisters(int unitAddr, int dataAddress, int count)
+	public byte[] readHoldingRegisters(int unitAddr, int dataAddress, int count, ModbusSlavePreferences msp)
 			throws ModbusProtocolException;
 	
 	/**
