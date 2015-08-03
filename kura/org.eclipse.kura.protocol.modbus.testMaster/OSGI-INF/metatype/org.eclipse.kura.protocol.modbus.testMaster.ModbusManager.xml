@@ -15,7 +15,7 @@
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
     <OCD id="org.eclipse.kura.protocol.modbus.testMaster.ModbusManager"
          name="ModbusManager" 
-         description="Modbus protocol example application, connecting a Modbus PLC to the Eurotech Cloud.">
+         description="Modbus protocol implementation for EV charging stations.">
               
         <Icon resource="http://s3.amazonaws.com/kura-resources/application/icon/modbus.png" size="32"/>
         
@@ -115,22 +115,6 @@
             <Option label="Space" value="4"/>
         </AD>
 
-        <AD id="publishTopic"  
-            name="publishTopic"
-            type="String"
-            cardinality="0" 
-            required="false"
-            default="eurotech/demo" 
-            description="The topic to publish data to the Cloud."/>
-
-        <AD id="controlTopic"  
-            name="controlTopic"
-            type="String"
-            cardinality="0" 
-            required="false"
-            default="eurotech/demo"
-            description="The base control topic to receive controls from the Cloud."/>
-
         <AD id="pollInterval"  
             name="pollInterval"
             type="String"
@@ -146,6 +130,129 @@
             required="true"
             default="180" 
             description="Interval in seconds between 2 mqtt publishes when modbus device is idle."/>
+            
+        <AD id="enable.read.input.register"
+            name="enable.read.input.register"
+            type="Boolean"
+            cardinality="0"
+            required="true"
+            default="false"
+            description="Enables or disables the Read Input Register Command (0x03)">
+        </AD>
+        
+        <AD id="enable.write.multiple.register"
+            name="enable.write.multiple.register"
+            type="Boolean"
+            cardinality="0"
+            required="true"
+            default="false"
+            description="Enables or disables the Write Multiple Register Command (0x10)">
+        </AD>
+        
+        <AD id="start.recharge"  
+            name="start.recharge"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: start recharge [0-1]"/>
+            
+       <AD id="recharge.is.booked"  
+            name="recharge.is.booked"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: recharge is booked [0-No; 1-Yes]"/>
+            
+       <AD id="solar.level"  
+            name="solar.level"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: Next day Solar Irradiation Level [0-Low; 1-Medium; 2-High]"/>
+            
+       <AD id="booking.time.hour"  
+            name="booking.time.hour"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: booking time hour [0; 23]"/>
+                        
+       <AD id="booking.time.minute"  
+            name="booking.time.minute"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: booking time minute [0; 59]"/>
+                                    
+       <AD id="booking.date.day"  
+            name="booking.date.day"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: booking date day [1; 31]"/>
+                                                
+       <AD id="booking.date.month"  
+            name="booking.date.month"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: booking date month [1; 12]"/>
+                                                
+       <AD id="booking.date.year"  
+            name="booking.date.year"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: booking date year [0; 65535]"/>
+                                                            
+       <AD id="current.time.hour"  
+            name="current.time.hour"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: current time hour [0; 23]"/>
+                                                            
+       <AD id="current.time.minute"  
+            name="current.time.minute"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: current time minute [0; 59]"/>
+                                                            
+       <AD id="current.date.day"  
+            name="current.date.day"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: current date year [1; 31]"/>
+                                                            
+       <AD id="current.date.month"  
+            name="current.date.month"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: current date year [1; 12]"/>
+                                                            
+       <AD id="current.date.year"  
+            name="current.date.year"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            description="Write MultipleRegister: current date year [0; 65535]"/>
+            
     </OCD>
     <Designate pid="org.eclipse.kura.protocol.modbus.testMaster.ModbusManager">
         <Object ocdref="org.eclipse.kura.protocol.modbus.testMaster.ModbusManager"/>

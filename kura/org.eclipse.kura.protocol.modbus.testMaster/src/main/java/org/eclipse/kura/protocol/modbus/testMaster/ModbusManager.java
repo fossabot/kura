@@ -39,7 +39,9 @@ import org.slf4j.LoggerFactory;
 public class ModbusManager implements ConfigurableComponent, CriticalComponent, CloudClientListener{
 
 	private static final Logger s_logger = LoggerFactory.getLogger(ModbusManager.class);
-
+	private static final String READ_INPUT_REGISTER="enable.read.input.register";
+	private static final String WRITE_MULTIPLE_REGISTER="enable.write.multiple.register";
+	
 	private Thread 						m_thread;
 	private boolean						m_threadShouldStop;
 	private Map<String,Object>    		m_properties;
@@ -68,7 +70,8 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 	private static boolean wdConfigured = false;
 	private static boolean connectionFailed = false;
 
-	private boolean readWrite=true;
+	private boolean toRead=true;
+	private WriteMultipleRegisterData writeMultipleRegisterProps;
 
 	public void setModbusProtocolDeviceService(ModbusProtocolDeviceService modbusService) {
 		this.m_protocolDevice = modbusService;
@@ -107,6 +110,7 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 		configured = false;
 
 		modbusProperties = getModbusProperties();
+		writeMultipleRegisterProps= getWriteMultipleRegisterProps();
 		pollInterval = Integer.valueOf(modbusProperties.getProperty("pollInterval")).intValue();
 		publishInterval = Integer.valueOf(modbusProperties.getProperty("publishInterval")).intValue();
 		slaveAddr = Integer.valueOf(modbusProperties.getProperty("slaveAddr")).intValue();
@@ -153,11 +157,45 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 		s_logger.info("updated...");		
 		m_properties = properties;
 		modbusProperties = getModbusProperties();
+		writeMultipleRegisterProps= getWriteMultipleRegisterProps();
 		pollInterval = Integer.valueOf(modbusProperties.getProperty("pollInterval")).intValue();
 		publishInterval = Integer.valueOf(modbusProperties.getProperty("publishInterval")).intValue();
 		slaveAddr = Integer.valueOf(modbusProperties.getProperty("slaveAddr")).intValue();
 		configured=false;
 	}	
+
+	private WriteMultipleRegisterData getWriteMultipleRegisterProps() {
+		WriteMultipleRegisterData data= new WriteMultipleRegisterData();
+		int startRecharge = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.START_RECHARGE));
+		int rechargeBooked = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.RECHARGE_IS_BOOKED));
+		int solarRadiation = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.SOLAR_RADIATION));
+		int bookingTimeHour = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.BOOKING_TIME_HOUR));
+		int bookingTimeMinute = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.BOOKING_TIME_MINUTE));
+		int bookingDateDay = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.BOOKING_DATE_DAY));
+		int bookingDateMonth = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.BOOKING_DATE_MONTH));
+		int bookingDateYear = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.BOOKING_DATE_YEAR));
+		int currentTimeHour = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.CURRENT_TIME_HOUR));
+		int currentTimeMinute = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.CURRENT_TIME_MINUTE));
+		int currentDateDay = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.CURRENT_DATE_DAY));
+		int currentDateMonth = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.CURRENT_DATE_MONTH));
+		int currentDateYear = Integer.parseInt((String) m_properties.get(WriteMultipleRegisterData.CURRENT_DATE_YEAR));
+		
+		data.setStartRecharge(startRecharge);
+		data.setRechargeBooked(rechargeBooked);
+		data.setSolarRadiationLevel(solarRadiation);
+		data.setBookingTimeHour(bookingTimeHour);
+		data.setBookingTimeMinute(bookingTimeMinute);
+		data.setBookingDateDay(bookingDateDay);
+		data.setBookingDateMonth(bookingDateMonth);
+		data.setBookingDateYear(bookingDateYear);
+		data.setCurrentTimeHour(currentTimeHour);
+		data.setCurrentTimeMinute(currentTimeMinute);
+		data.setCurrentDateDay(currentDateDay);
+		data.setCurrentDateMonth(currentDateMonth);
+		data.setCurrentDateYear(currentDateYear);
+		
+		return data;
+	}
 
 	private boolean doConnectionWork() {
 		String topic = null;
@@ -255,6 +293,15 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 									wdConfigured=true;
 								}
 							}
+							
+							if(	Boolean.parseBoolean((String) modbusProperties.get(READ_INPUT_REGISTER)) 
+							 && Boolean.parseBoolean((String) modbusProperties.get(WRITE_MULTIPLE_REGISTER))){
+								
+							} else if (Boolean.parseBoolean((String) modbusProperties.get(READ_INPUT_REGISTER))) {
+								toRead = true;
+							} else {
+								toRead = false;
+							}
 
 							performPoll();
 						}
@@ -305,6 +352,8 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 			String Slave= null;
 			String Mode= null;
 			String timeout= null;
+			Boolean isWriteMultipleEnabled= null;
+			Boolean isReadInputEnabled= null;
 			if(m_properties.get("slaveAddr") != null) Slave 		= (String) m_properties.get("slaveAddr");
 			if(m_properties.get("transmissionMode") != null) Mode	= (String) m_properties.get("transmissionMode");
 			if(m_properties.get("respTimeout") != null) timeout		= (String) m_properties.get("respTimeout");
@@ -319,7 +368,9 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 			if(m_properties.get("ipAddress") != null) ipAddress		= (String) m_properties.get("ipAddress");
 			if(m_properties.get("pollInterval") != null) pollInt	= (String) m_properties.get("pollInterval");
 			if(m_properties.get("publishInterval") != null) pubInt	= (String) m_properties.get("publishInterval");
-
+			if(m_properties.get("enable.read.input.register") != null) isReadInputEnabled	= (Boolean) m_properties.get("enable.read.input.register");
+			if(m_properties.get("enable.write.multiple.register") != null) isWriteMultipleEnabled	= (Boolean) m_properties.get("enable.write.multiple.register");
+			
 			if(portName==null) //portName="/dev/ttyUSB0";
 				return null;		
 			if(baudRate==null) baudRate="9600";
@@ -358,6 +409,8 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 			prop.setProperty("controlTopic", ctopic);
 			prop.setProperty("pollInterval", pollInt);
 			prop.setProperty("publishInterval", pubInt);
+			prop.setProperty("enable.read.input.register", isReadInputEnabled ? "true" : "false");
+			prop.setProperty("enable.write.multiple.register", isWriteMultipleEnabled ? "true" : "false");
 
 			return prop;
 		} else {
@@ -397,7 +450,7 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 		int it6=0;
 		int[] digitalInputs;
 
-		if(readWrite){
+		if(Boolean.parseBoolean((String) modbusProperties.get(READ_INPUT_REGISTER)) && toRead){
 			s_logger.info("ReadHoldingRegisters:");
 			digitalInputs = m_protocolDevice.readHoldingRegisters(slaveAddr, 1, 15);
 
@@ -422,7 +475,7 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 			int pVSystemV= digitalInputs[12];
 			int iOut= digitalInputs[13];
 			int storageBatteryI= digitalInputs[14];
-			s_logger.info("Slave-> power out: " + powerOut +
+			s_logger.info("Received from Slave-> power out: " + powerOut +
 					" rechargeTime: " + rechargeTime + 
 					" energyOut: " + energyOut +
 					" powerPV: " + powerPV +
@@ -443,28 +496,28 @@ public class ModbusManager implements ConfigurableComponent, CriticalComponent, 
 					" pVSystemV: " + pVSystemV +
 					" iOut: " + iOut +
 					" storageBatteryI: " + storageBatteryI);
-			//readWrite=false;
-		}else{
+			toRead=false;
+		}else if (Boolean.parseBoolean((String) modbusProperties.get(WRITE_MULTIPLE_REGISTER)) && !toRead){
 			int[] data=new int[7];
 			
-			int startRecharge= 1; //start recharge [0,1]
-			int isBooked= (0 << 1); //Recharge is booked? [0-No;1-Yes]
-			int solarIrradiation= (2 << 2); //Next Day Solar Radiation Level [0-Low; 1-Medium; 2-High]
+			int startRecharge= writeMultipleRegisterProps.getStartRecharge(); //start recharge [0,1]
+			int isBooked= (writeMultipleRegisterProps.getRechargeBooked() << 1); //Recharge is booked? [0-No;1-Yes]
+			int solarIrradiation= (writeMultipleRegisterProps.getSolarRadiationLevel() << 2); //Next Day Solar Radiation Level [0-Low; 1-Medium; 2-High]
 			
 			data[0] = (startRecharge + isBooked + solarIrradiation) << 8; //Panel PC Start/Stop/Booking/Next day weather forecast
-			data[1] = (25 << 8) + (12); //Booking Time
-			data[2] = (2 << 8) + 22 ; //Booking month and day
-			data[3] = 2014; //Booking year
+			data[1] = (writeMultipleRegisterProps.getBookingTimeMinute() << 8) + (writeMultipleRegisterProps.getBookingTimeHour()); //Booking Time
+			data[2] = (writeMultipleRegisterProps.getBookingDateMonth() << 8) + writeMultipleRegisterProps.getBookingDateDay() ; //Booking month and day
+			data[3] = writeMultipleRegisterProps.getBookingDateYear(); //Booking year
 			
-			Calendar cal = Calendar.getInstance();
-			data[4] = (cal.get(Calendar.MINUTE) << 8) + cal.get(Calendar.HOUR_OF_DAY); //Current date -> minutes and hours
-			data[5] = (cal.get(Calendar.MONTH) << 8) + cal.get(Calendar.DAY_OF_MONTH);  //Current Date -> month and day
-			data[6] = cal.get(Calendar.YEAR); //Current date -> year
+			//Calendar cal = Calendar.getInstance();
+			data[4] = (writeMultipleRegisterProps.getCurrentTimeMinute() << 8) + writeMultipleRegisterProps.getBookingTimeHour(); //Current date -> minutes and hours
+			data[5] = (writeMultipleRegisterProps.getCurrentDateMonth() << 8) + writeMultipleRegisterProps.getCurrentDateDay();  //Current Date -> month and day
+			data[6] = writeMultipleRegisterProps.getCurrentDateYear(); //Current date -> year
 
 			s_logger.info("WriteMultipleRegister");
 			m_protocolDevice.writeMultipleRegister(slaveAddr, 1, data);
 			s_logger.info("After write");
-			readWrite= true;
+			toRead= true;
 		}
 
 

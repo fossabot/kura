@@ -44,7 +44,7 @@ public class ModbusProtocolSlaveImpl implements ModbusProtocol{
 		data[0] = msp.getPowerOut(); //Power Out [W]
 		data[1] = msp.getTimeToRecharge(); //Time to recharge [s]
 		data[2] = msp.getEnergyOut(); //Energy Out [Wh]
-		data[3] = msp.getPowerOut(); //Power PV Out [W]
+		data[3] = msp.getPowerPV(); //Power PV Out [W]
 		
 		int faultFlag= msp.isFaultFlag() ? 1 : 0;
 		int rechargeAvailable= msp.isRechargeAvailable() ? 1 : 0;

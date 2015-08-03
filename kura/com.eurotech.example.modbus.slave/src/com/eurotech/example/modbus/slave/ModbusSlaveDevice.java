@@ -15,6 +15,7 @@ public class ModbusSlaveDevice implements ConfigurableComponent, ModbusSlaveDevi
 	public final String POWER_OUT= "power.out";
 	public final String TIME_TO_RECHARGE= "time.to.recharge";
 	public final String ENERGY_OUT= "energy.out";
+	public final String POWER_PV= "power.pv";
 	public final String FAULT_FLAG= "fault.flag";
 	public final String RECHARGE_AVAILABLE= "recharge.available";
 	public final String RECHARGE_IN_PROGRESS= "recharge.in.progress";
@@ -131,6 +132,7 @@ public class ModbusSlaveDevice implements ConfigurableComponent, ModbusSlaveDevi
 		int powerOut = Integer.parseInt((String) m_properties.get(POWER_OUT));
 		int timeToRecharge = Integer.parseInt((String) m_properties.get(TIME_TO_RECHARGE));
 		int energyOut = Integer.parseInt((String) m_properties.get(ENERGY_OUT));
+		int powerPV = Integer.parseInt((String) m_properties.get(POWER_PV));
 		boolean faultFlag = Integer.parseInt((String) m_properties.get(FAULT_FLAG)) == 1 ? true: false;
 		boolean rechargeAvailable = Integer.parseInt((String) m_properties.get(RECHARGE_AVAILABLE)) == 1 ? true: false;
 		boolean rechargeInProgress = Integer.parseInt((String) m_properties.get(RECHARGE_IN_PROGRESS)) == 1 ? true: false;
@@ -152,6 +154,7 @@ public class ModbusSlaveDevice implements ConfigurableComponent, ModbusSlaveDevi
 		prefs.setPowerOut(powerOut);
 		prefs.setTimeToRecharge(timeToRecharge);
 		prefs.setEnergyOut(energyOut);
+		prefs.setPowerPV(powerPV);
 		prefs.setFaultFlag(faultFlag);
 		prefs.setRechargeAvailable(rechargeAvailable);
 		prefs.setRechargeInProgress(rechargeInProgress);

@@ -4,6 +4,7 @@ public class ModbusSlavePreferences {
 	private int powerOut;
 	private int timeToRecharge;
 	private int energyOut;
+	private int powerPV;
 	private boolean faultFlag;
 	private boolean rechargeAvailable;
 	private boolean rechargeInProgress;
@@ -39,6 +40,12 @@ public class ModbusSlavePreferences {
 	}
 	public void setEnergyOut(int energyOut) {
 		this.energyOut = energyOut;
+	}
+	public int getPowerPV() {
+		return powerPV;
+	}
+	public void setPowerPV(int powerPV) {
+		this.powerPV = powerPV;
 	}
 	public boolean isFaultFlag() {
 		return faultFlag;

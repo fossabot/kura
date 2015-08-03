@@ -42,6 +42,14 @@
             required="true"
             default="0"
             description="Energy Out [Wh]"/>
+            
+        <AD id="power.pv"
+            name="power.pv"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            description="Power PV [W]"/>
 
         <AD id="fault.flag"
             name="fault.flag"
