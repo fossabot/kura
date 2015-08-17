@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+    <OCD id="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest"
+         name="Can network test" 
+         description="Can network example application.">
+              
+        <AD id="can.name"
+            name="can.name"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="can0"
+            description="CAN socket Name."/>
+            
+       <AD id="start.recharge"  
+            name="start.recharge"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "1"
+            description="ID 0x200: start recharge [0-1]"/>
+            
+       <AD id="recharge.is.booked"  
+            name="recharge.is.booked"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "1"
+            description="ID 0x200: recharge is booked [0-No; 1-Yes]"/>
+            
+       <AD id="solar.level"  
+            name="solar.level"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "2"
+            description="ID 0x200: Next day Solar Irradiation Level [0-Low; 1-Medium; 2-High]"/>
+       
+       <AD id="cs.reset"  
+            name="cs.reset"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "1"
+            description="ID 0x200: Charging station reset [0-1]"/>
+            
+       <AD id="booking.time.hour"  
+            name="booking.time.hour"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "23"
+            description="Write MultipleRegister: booking time hour [0; 23]"/>
+                        
+       <AD id="booking.time.minute"  
+            name="booking.time.minute"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "59"
+            description="Write MultipleRegister: booking time minute [0; 59]"/>
+                                    
+       <AD id="booking.date.day"  
+            name="booking.date.day"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "1"
+            max = "31"
+            description="Write MultipleRegister: booking date day [1; 31]"/>
+                                                
+       <AD id="booking.date.month"  
+            name="booking.date.month"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "1"
+            max = "12"
+            description="Write MultipleRegister: booking date month [1; 12]"/>
+                                                
+       <AD id="booking.date.year"  
+            name="booking.date.year"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "65535"
+            description="Write MultipleRegister: booking date year [0; 65535]"/>
+                                                            
+       <AD id="current.time.hour"  
+            name="current.time.hour"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "23"
+            description="Write MultipleRegister: current time hour [0; 23]"/>
+                                                            
+       <AD id="current.time.minute"  
+            name="current.time.minute"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "59"
+            description="Write MultipleRegister: current time minute [0; 59]"/>
+                                                            
+       <AD id="current.date.day"  
+            name="current.date.day"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "1"
+            max = "31"
+            description="Write MultipleRegister: current date year [1; 31]"/>
+                                                            
+       <AD id="current.date.month"  
+            name="current.date.month"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "1"
+            max = "12"
+            description="Write MultipleRegister: current date year [1; 12]"/>
+                                                            
+       <AD id="current.date.year"  
+            name="current.date.year"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="0" 
+            min = "0"
+            max = "65535"
+            description="Write MultipleRegister: current date year [0; 65535]"/>
+            
+            
+    </OCD>
+    <Designate pid="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest">
+        <Object ocdref="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest"/>
+    </Designate>
+</MetaData>

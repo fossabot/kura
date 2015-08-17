@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" 
+configuration-policy="require" 
+enabled="true" immediate="true" 
+modified="updated" 
+name="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest">
+   <implementation class="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest"/>
+   <service>
+      <provide interface="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest"/>
+   </service>
+   <property name="service.pid" value="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest"/>
+
+   <reference name="CanConnectionService"
+              bind="setCanConnectionService"
+              unbind="unsetCanConnectionService"
+              cardinality="1..1"
+              policy="static"
+              interface="org.eclipse.kura.protocol.can.CanConnectionService"/>
+</scr:component>
