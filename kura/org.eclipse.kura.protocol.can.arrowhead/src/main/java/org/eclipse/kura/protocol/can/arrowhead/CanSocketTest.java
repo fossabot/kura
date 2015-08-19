@@ -17,17 +17,29 @@ import org.eclipse.kura.protocol.can.recharge.RechargeInfo;
 
 public class CanSocketTest implements ConfigurableComponent {
 	private static final Logger s_logger = LoggerFactory.getLogger(CanSocketTest.class);
+	private static final String THREAD_DELAY= "can.initial.threads.delay";
+	private static final String ID_200_FREQUENCY= "can.id200.message.frequency";
+	private static final String ID_201_FREQUENCY= "can.id201.message.frequency";
+	private static final String ID_202_FREQUENCY= "can.id202.message.frequency";
 
 	private CanConnectionService 	m_canConnection;
 	private Map<String,Object>   	m_properties;
 	private Thread 					m_listenThread;
-	private Thread 					m_sendThread;
+	private Thread 					m_sendThread1;
+	private Thread 					m_sendThread2;
+	private Thread 					m_sendThread3;
 	private String					m_ifName;
-	private int						m_nextMessageIndex;
 
 	private RechargeInfo rechargeInfo;
 	private BookingInfo bookingInfo;
 	private CurrentDateInfo currentDateInfo;
+	private static int threadsDelay;
+	private static int id200Freq;
+	private static int id201Freq;
+	private static int id202Freq;
+	
+	private volatile boolean senderRunning = true;
+	private volatile boolean receiverRunning = true;
 
 	public void setCanConnectionService(CanConnectionService canConnection) {
 		this.m_canConnection = canConnection;
@@ -39,7 +51,7 @@ public class CanSocketTest implements ConfigurableComponent {
 
 	protected void activate(ComponentContext componentContext, Map<String,Object> properties) {
 		m_properties = properties;
-		s_logger.info("activating Panel PC can test");
+		s_logger.info("activating Minigateway can test");
 		m_ifName="can0";
 
 		if(m_properties!=null){
@@ -49,12 +61,15 @@ public class CanSocketTest implements ConfigurableComponent {
 			rechargeInfo= populateRechargeInfo();
 			bookingInfo= populateBookingInfo();
 			currentDateInfo= populateCurrentDateInfo();
+			
+			getDelays();
 		}
 
 		if(m_listenThread!=null){
 			m_listenThread.interrupt();
 			try {
 				m_listenThread.join(100);
+				receiverRunning= false;
 			} catch (InterruptedException e) {
 				// Ignore
 			}
@@ -65,44 +80,15 @@ public class CanSocketTest implements ConfigurableComponent {
 			@Override
 			public void run() {
 				if(m_canConnection!=null){
-					while(true){
-						//doCanTest();
-						try {
-							Thread.sleep(10);
-						} catch (InterruptedException e) {
-						}
+					while(receiverRunning){
+						doReceiveTest();
 					}
 				}
 			}
 		});
 		m_listenThread.start();
 
-
-		if(m_sendThread!=null){
-			m_sendThread.interrupt();
-			try {
-				m_sendThread.join(100);
-			} catch (InterruptedException e) {
-				// Ignore
-			}
-			m_sendThread=null;
-		}
-
-		m_sendThread = new Thread(new Runnable() {		
-			@Override
-			public void run() {
-				if(m_canConnection!=null){
-					while(true){
-						doSendTest();
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-						}
-					}
-				}
-			}
-		});
-		m_sendThread.start();
+		startSendThreads();
 	}
 
 	protected void deactivate(ComponentContext componentContext) {
@@ -110,23 +96,16 @@ public class CanSocketTest implements ConfigurableComponent {
 			m_listenThread.interrupt();
 			try {
 				m_listenThread.join(100);
+				receiverRunning= false;
 			} catch (InterruptedException e) {
 				// Ignore
 			}
 		}
 		m_listenThread=null;
-
-		if(m_sendThread!=null){
-			m_sendThread.interrupt();
-			try {
-				m_sendThread.join(100);
-			} catch (InterruptedException e) {
-				// Ignore
-			}
-		}
-		m_sendThread=null;
+		
+		stopSendThreads();
 	}
-
+	
 	public void updated(Map<String,Object> properties)
 	{
 		s_logger.debug("updated...");		
@@ -138,8 +117,159 @@ public class CanSocketTest implements ConfigurableComponent {
 			rechargeInfo= populateRechargeInfo();
 			bookingInfo= populateBookingInfo();
 			currentDateInfo= populateCurrentDateInfo();
+			
+			getDelays();
 		}
+		
+		stopSendThreads();
+		senderRunning= true;
+		startSendThreads();
 	}
+	
+	private void getDelays() {
+		threadsDelay = Integer.parseInt((String) m_properties.get(THREAD_DELAY));
+		id200Freq = Integer.parseInt((String) m_properties.get(ID_200_FREQUENCY));
+		id201Freq = Integer.parseInt((String) m_properties.get(ID_201_FREQUENCY));
+		id202Freq = Integer.parseInt((String) m_properties.get(ID_202_FREQUENCY));
+		
+	}
+	
+	private void startSendThreads(){
+		if(m_sendThread1!=null){
+			m_sendThread1.interrupt();
+			try {
+				m_sendThread1.join(100);
+				senderRunning = false;
+			} catch (InterruptedException e) {
+				// Ignore
+			}
+			m_sendThread1=null;
+		}
+
+		m_sendThread1 = new Thread(new Runnable() {		
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(threadsDelay * 0);
+				} catch (InterruptedException e) {
+				}
+				if(m_canConnection!=null){
+					while(senderRunning){
+						doSend1Test();
+						s_logger.debug("Thread1 sleeping for: " + id200Freq);
+						try {
+							Thread.sleep(id200Freq);
+						} catch (InterruptedException e) {
+						}
+					}
+				}
+			}
+		});
+		m_sendThread1.start();
+		
+		if(m_sendThread2!=null){
+			m_sendThread2.interrupt();
+			try {
+				m_sendThread2.join(100);
+				senderRunning= false;
+			} catch (InterruptedException e) {
+				// Ignore
+			}
+			m_sendThread2=null;
+		}
+
+		m_sendThread2 = new Thread(new Runnable() {		
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(100 * 1);
+				} catch (InterruptedException e) {
+				}
+				if(m_canConnection!=null){
+					while(senderRunning){
+						doSend2Test();
+						s_logger.debug("Thread2 sleeping for: " + id201Freq);
+						try {
+							Thread.sleep(id201Freq);
+						} catch (InterruptedException e) {
+						}
+					}
+				}
+			}
+		});
+		m_sendThread2.start();
+		
+		
+		if(m_sendThread3!=null){
+			m_sendThread3.interrupt();
+			try {
+				m_sendThread3.join(100);
+				senderRunning= false;
+			} catch (InterruptedException e) {
+				// Ignore
+			}
+			m_sendThread3=null;
+		}
+
+		m_sendThread3 = new Thread(new Runnable() {		
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(100 * 2);
+				} catch (InterruptedException e) {
+				}
+				if(m_canConnection!=null){
+					while(senderRunning){
+						doSend3Test();
+						s_logger.debug("Thread3 sleeping for: " + id202Freq);
+						try {
+							Thread.sleep(id202Freq);
+						} catch (InterruptedException e) {
+						}
+					}
+				}
+			}
+		});
+		m_sendThread3.start();
+	}
+	
+	private void stopSendThreads(){
+		if(m_sendThread1!=null){
+			m_sendThread1.interrupt();
+			try {
+				m_sendThread1.join(100);
+				senderRunning= false;
+			} catch (InterruptedException e) {
+				// Ignore
+			}
+		}
+		m_sendThread1=null;
+		
+		
+		if(m_sendThread2!=null){
+			m_sendThread2.interrupt();
+			try {
+				m_sendThread2.join(100);
+				senderRunning= false;
+			} catch (InterruptedException e) {
+				// Ignore
+			}
+		}
+		m_sendThread2=null;
+		
+		
+		if(m_sendThread3!=null){
+			m_sendThread3.interrupt();
+			try {
+				m_sendThread3.join(100);
+				senderRunning= false;
+			} catch (InterruptedException e) {
+				// Ignore
+			}
+		}
+		m_sendThread3=null;
+	}
+
 
 	private RechargeInfo populateRechargeInfo() {
 		RechargeInfo ri= new RechargeInfo();
@@ -190,9 +320,9 @@ public class CanSocketTest implements ConfigurableComponent {
 		return cdi;
 	}
 
-	public void doCanTest() {
+	public void doReceiveTest() {
 		CanMessage cm = null;
-		s_logger.info("Wait for a request");
+		s_logger.debug("Waiting for a request");
 		try {
 			cm = m_canConnection.receiveCanMessage(-1,0x7FF);
 		} catch (KuraException e) {
@@ -223,65 +353,118 @@ public class CanSocketTest implements ConfigurableComponent {
 	private void parseCanMessage1(CanMessage cm){
 		byte[] b = null;
 		b = cm.getData();
-		if(b!=null){
+		if(b!=null && b.length == 8){
 			StringBuilder sb = new StringBuilder("received : ");
-			for(int i=0; i<b.length; i++){
-				sb.append(b[i]);
-				sb.append(";");
-			}
+			
+			int powerOut= buildShort(b[0], b[1]);
+			int minutesToRecharge= b[2];
+			int secondsToRecharge= b[3];
+			int energyOut= buildShort(b[4], b[5]);
+			int powerPV= buildShort(b[6], b[7]);
+			
+			sb.append("Power out: " + powerOut + " W, ");
+			sb.append("Minutes to recharge: " + minutesToRecharge + " minutes, ");
+			sb.append("Seconds to recharge: " + secondsToRecharge + " seconds, ");
+			sb.append("Energy out: " + energyOut + " Wh, ");
+			sb.append("Power PV: " + powerPV + " W");
+			
+//			for(int i=0; i<b.length; i++){
+//				sb.append(b[i]);
+//				sb.append(";");
+//			}
 			sb.append(" on id = ");
 			sb.append(cm.getCanId());			
-			s_logger.info(sb.toString());
+			s_logger.debug(sb.toString());
 		}
 	}
 
 	private void parseCanMessage2(CanMessage cm){
 		byte[] b = null;
 		b = cm.getData();
-		if(b!=null){
+		if(b!=null && b.length == 5){
 			StringBuilder sb = new StringBuilder("received : ");
-			for(int i=0; i<b.length; i++){
-				sb.append(b[i]);
-				sb.append(";");
-			}
+			
+			int faultFlag= b[0] & 0x01;
+			int rechargeAvailable= (b[0] & 0x02) >> 1;
+			int rechargeInProgress= (b[0] & 0x04) >> 2;
+			int pvSystemActive= (b[0] & 0x08) >> 3;
+			int auxChargerActive= (b[0] & 0x10) >> 4;
+			int storageBatteryConcactorSts= (b[0] & 0x20) >> 5;
+			int converterConcactorSts= (b[0] & 0x40) >> 6;
+			
+			int faultString= b[1];
+			int igbtTemperature= b[2];
+			int storageBatteryTemperature= b[3];
+			int storageBatterySOC= b[4];
+			
+			sb.append("Fault flag: " + faultFlag + ", ");
+			sb.append("Recharge available: " + rechargeAvailable + ", ");
+			sb.append("Recharge in progress: " + rechargeInProgress + ", ");
+			sb.append("PV System active: " + pvSystemActive + ", ");
+			sb.append("Aux charger active: " + auxChargerActive + ", ");
+			sb.append("Storage Battery Concactor Sts: " + storageBatteryConcactorSts + ", ");
+			sb.append("Converter Contactor Sts: " + converterConcactorSts + ", ");
+			
+			sb.append("Fault string: " + faultString + ", ");
+			sb.append("IGBT Temperature: " + igbtTemperature + " celsius, ");
+			sb.append("Storage Battery Temperature: " + storageBatteryTemperature + " celsius, ");
+			sb.append("Storage Battery SOC: " + storageBatterySOC + "celsius");
+			
 			sb.append(" on id = ");
 			sb.append(cm.getCanId());			
-			s_logger.info(sb.toString());
+			s_logger.debug(sb.toString());
 		}
 	}
 
 	private void parseCanMessage3(CanMessage cm){
 		byte[] b = null;
 		b = cm.getData();
-		if(b!=null){
+		if(b!=null && b.length == 8){
 			StringBuilder sb = new StringBuilder("received : ");
-			for(int i=0; i<b.length; i++){
-				sb.append(b[i]);
-				sb.append(";");
-			}
+			
+			int vOut= buildShort(b[0], b[1]);
+			int storageBatteryV= buildShort(b[2], b[3]);
+			int pvSystemV= buildShort(b[4], b[5]);
+			int iOut= b[6];
+			int storageBatteryI= b[7];
+			
+			sb.append("V out: " + vOut + " V, ");
+			sb.append("Storage Battery V: " + storageBatteryV + " V, ");
+			sb.append("PV System V: " + pvSystemV + " V, ");
+			sb.append("I out: " + iOut + " A, ");
+			sb.append("Storage Battery I: " + storageBatteryI + " A");
+			
 			sb.append(" on id = ");
 			sb.append(cm.getCanId());			
-			s_logger.info(sb.toString());
+			s_logger.debug(sb.toString());
 		}
 	}
 
-	public void doSendTest() {
-
+	public void doSend1Test() {
 		try {
-			if(m_nextMessageIndex == 0){
-				sendMessage1(m_ifName);
-			} else if(m_nextMessageIndex == 1){
-				sendMessage2(m_ifName);
-			} else {
-				sendMessage3(m_ifName);
-			}
+			sendMessage1(m_ifName);
 		} catch (Exception e) {
 			s_logger.warn("CanConnection Crash!");			
 			e.printStackTrace();
 		}
-		m_nextMessageIndex++;
-		m_nextMessageIndex= m_nextMessageIndex % 3;
-
+	}
+	
+	public void doSend2Test() {
+		try {
+			sendMessage2(m_ifName);
+		} catch (Exception e) {
+			s_logger.warn("CanConnection Crash!");			
+			e.printStackTrace();
+		}
+	}
+	
+	public void doSend3Test() {
+		try {
+			sendMessage3(m_ifName);
+		} catch (Exception e) {
+			s_logger.warn("CanConnection Crash!");			
+			e.printStackTrace();
+		}
 	}
 
 	private void sendMessage1(String ifName) throws KuraException, IOException {
@@ -303,9 +486,10 @@ public class CanSocketTest implements ConfigurableComponent {
 
 		sb.append(" and id = ");
 		sb.append(id);
-		s_logger.info(sb.toString());
+		s_logger.debug(sb.toString());
 
 		m_canConnection.sendCanMessage(ifName, id, bMessage);
+		s_logger.info("Message sent with id: " + id);
 	}
 
 	private void sendMessage2(String ifName) throws KuraException, IOException {
@@ -343,9 +527,10 @@ public class CanSocketTest implements ConfigurableComponent {
 
 		sb.append(" and id = ");
 		sb.append(id);
-		s_logger.info(sb.toString());
+		s_logger.debug(sb.toString());
 
 		m_canConnection.sendCanMessage(ifName, id, bMessage);
+		s_logger.info("Message sent with id: " + id);
 	}
 
 	private void sendMessage3(String ifName) throws KuraException, IOException {
@@ -370,9 +555,10 @@ public class CanSocketTest implements ConfigurableComponent {
 
 		sb.append(" and id = ");
 		sb.append(id);
-		s_logger.info(sb.toString());
+		s_logger.debug(sb.toString());
 
 		m_canConnection.sendCanMessage(ifName, id, bCurrentDate);
+		s_logger.info("Message sent with id: " + id);
 	}
 
 	private int buildShort(byte high, byte low){

@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
+    <OCD id="org.eclipse.kura.protocol.can.arrowhead.cs.CanSocketTest"
+         name="Can cs network test" 
+         description="Can cs network example application.">
+              
+        <AD id="can.name"
+            name="can.name"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="can0"
+            description="CAN socket Name."/>
+            
+       <AD id="power.out"
+            name="power.out"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "60000"
+            description="ID 0x100: Power Out [W] [0-60000]"/>
+        
+        <AD id="time.to.recharge.minutes"
+            name="time.to.recharge.minutes"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "59"
+            description="ID 0x100: Time to recharge [minutes] [0-59]"/>
+            
+        <AD id="time.to.recharge.seconds"
+            name="time.to.recharge.seconds"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "59"
+            description="ID 0x100: Time to recharge [s] [0-59]"/>
+        
+        <AD id="energy.out"
+            name="energy.out"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "65535"
+            description="ID 0x100: Energy Out [Wh] [0-65535]"/>
+            
+        <AD id="power.pv"
+            name="power.pv"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "65535"
+            description="ID 0x100: Power PV [W] [0-65535]"/>
+
+
+
+        <AD id="fault.flag"
+            name="fault.flag"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "1"
+            description="ID 0x101: Fault_flag [0-1]"/>
+
+        <AD id="recharge.available"
+            name="recharge.available"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "1"
+            description="ID 0x101: Recharge_Available [0-1]"/>
+
+        <AD id="recharge.in.progress"
+            name="recharge.in.progress"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "1"
+            description="ID 0x101: Recharge_In_Progress [0-1]"/>
+
+        <AD id="pv.system.active"
+            name="pv.system.active"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "1"
+            description="ID 0x101: PV_System_Active [0-1]"/>
+
+        <AD id="aux.charger.active"
+            name="aux.charger.active"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "1"
+            description="ID 0x101: Aux_Charger_Active [0-1]"/>
+
+        <AD id="storage.battery.contactor.status"
+            name="storage.battery.contactor.status"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "1"
+            description="ID 0x101: Storage_Battery_Contactor_Status [0-1]"/>
+
+        <AD id="converter.contactor.status"
+            name="converter.contactor.status"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "1"
+            description="ID 0x101: Converter_Contactor_Status [0-1]"/>
+
+        <AD id="fault.string"
+            name="fault.string"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "255"
+            description="ID 0x101: Fault String [0-255]"/>
+                        
+        <AD id="igbt.temp"
+            name="igbt.temp"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "-40"
+            max = "150"
+            description="ID 0x101: IGBT_temp [°C] [-40 - 150]"/>
+                        
+        <AD id="storage.temp"
+            name="storage.temp"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "-40"
+            max = "150"
+            description="ID 0x101: Storage temp [°C] [-40 - 150]"/>
+                        
+        <AD id="storage.battery.soc"
+            name="storage.battery.soc"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "100"
+            description="ID 0x101: Storage battery SOC [%] [0-100]"/>
+              
+              
+                        
+        <AD id="v.out"
+            name="v.out"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "500"
+            description="ID 0x102: V_Out [V] [0-500]"/>
+                        
+        <AD id="storage.battery.v"
+            name="storage.battery.v"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "900"
+            description="ID 0x102: Storage_Battery_V [V] [0-900]"/>
+                        
+        <AD id="pv.system.v"
+            name="pv.system.v"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "900"
+            description="ID 0x102: PV_System_V [V] [0-900]"/>
+                        
+        <AD id="i.out"
+            name="i.out"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "120"
+            description="ID 0x102: I_Out [A] [0-120]"/>
+                        
+        <AD id="storage.battery.i"
+            name="storage.battery.i"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "120"
+            description="ID 0x102: Storage_Battery_I [A] [0-120]"/>
+            
+    </OCD>
+    <Designate pid="org.eclipse.kura.protocol.can.arrowhead.cs.CanSocketTest">
+        <Object ocdref="org.eclipse.kura.protocol.can.arrowhead.cs.CanSocketTest"/>
+    </Designate>
+</MetaData>
