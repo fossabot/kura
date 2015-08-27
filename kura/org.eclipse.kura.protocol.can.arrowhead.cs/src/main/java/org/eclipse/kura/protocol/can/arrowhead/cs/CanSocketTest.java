@@ -17,6 +17,7 @@ import org.eclipse.kura.protocol.can.cs.Message3;
 
 public class CanSocketTest implements ConfigurableComponent {
 	private static final Logger s_logger = LoggerFactory.getLogger(CanSocketTest.class);
+	private static final String IS_BIG_ENDIAN= "can.bigendian";
 
 	private CanConnectionService 	m_canConnection;
 	private Map<String,Object>   	m_properties;
@@ -24,6 +25,7 @@ public class CanSocketTest implements ConfigurableComponent {
 	private Thread 					m_sendThread;
 	private String					m_ifName;
 	private int						m_nextMessageIndex;
+	private boolean isBigEndian= true;
 
 	private Message1 message1Info;
 	private Message2 message2Info;
@@ -51,6 +53,8 @@ public class CanSocketTest implements ConfigurableComponent {
 			message1Info= populateMessage1Info();
 			message2Info= populateMessage2Info();
 			message3Info= populateMessage3Info();
+
+			isBigEndian= (Boolean) m_properties.get(IS_BIG_ENDIAN);
 		}
 
 		if(m_listenThread!=null){
@@ -136,6 +140,8 @@ public class CanSocketTest implements ConfigurableComponent {
 			message1Info= populateMessage1Info();
 			message2Info= populateMessage2Info();
 			message3Info= populateMessage3Info();
+
+			isBigEndian= (Boolean) m_properties.get(IS_BIG_ENDIAN);
 		}
 	}
 
@@ -265,7 +271,13 @@ public class CanSocketTest implements ConfigurableComponent {
 			int bookingTimeMinute= b[1]; //Booking time: minute
 			int bookingDateDay= b[2]; //Booking date: day
 			int bookingDateMonth= b[3]; //Booking date: month
-			int bookingDateYear= buildShort(b[4], b[5]); //Booking date: year
+			
+			int bookingDateYear;
+			if (isBigEndian) {
+				bookingDateYear= buildShort(b[4], b[5]); //Booking date: year
+			} else {
+				bookingDateYear= buildShort(b[5], b[4]); //Booking date: year
+			}
 			int currentTimeHour= b[6]; //Current time: hour
 			int currentTimeMinute= b[7]; //Current time: minute
 
@@ -291,7 +303,13 @@ public class CanSocketTest implements ConfigurableComponent {
 
 			int currentDateDay= b[0];
 			int currentDateMonth= b[1];
-			int currentDateYear= buildShort(b[2], b[3]);
+
+			int currentDateYear;
+			if (isBigEndian) {
+				currentDateYear= buildShort(b[2], b[3]);
+			} else{
+				currentDateYear= buildShort(b[3], b[2]);
+			}
 
 			sb.append("Current date: day " + currentDateDay + ", ");
 			sb.append("Current date: month " + currentDateMonth + ", ");
@@ -306,7 +324,7 @@ public class CanSocketTest implements ConfigurableComponent {
 
 	public void doSendTest() {
 
-		
+
 		try {
 			if(counter != 0){
 				sendMessage1(m_ifName);
@@ -340,23 +358,50 @@ public class CanSocketTest implements ConfigurableComponent {
 		int energyOut= message1Info.getEnergyOut(); //Energy Out [Wh]
 		int powerPV= message1Info.getPowerPV(); //Power PV Out [W]
 
-		bMessage[0]= (byte) ((powerOut >> 8) & 0xFF);
-		bMessage[1]= (byte) (powerOut & 0xFF);
+		if (isBigEndian) {
+			bMessage[0]= (byte) ((powerOut >> 8) & 0xFF);
+			bMessage[1]= (byte) (powerOut & 0xFF);
+		} else {
+			bMessage[0]= (byte) (powerOut & 0xFF);
+			bMessage[1]= (byte) ((powerOut >> 8) & 0xFF);
+		}
 
 		bMessage[2]= (byte) timeToRechargeMinutes;
 		bMessage[3]= (byte) timeToRechargeSeconds;
 
-		bMessage[4]= (byte) ((energyOut >> 8) & 0xFF);
-		bMessage[5]= (byte) (energyOut & 0xFF);
+		if (isBigEndian) {
+			bMessage[4]= (byte) ((energyOut >> 8) & 0xFF);
+			bMessage[5]= (byte) (energyOut & 0xFF);
+		} else {
+			bMessage[4]= (byte) (energyOut & 0xFF);
+			bMessage[5]= (byte) ((energyOut >> 8) & 0xFF);
+		}
 
-		bMessage[6]= (byte) ((powerPV >> 8) & 0xFF);
-		bMessage[7]= (byte) (powerPV & 0xFF);
+		if (isBigEndian) {
+			bMessage[6]= (byte) ((powerPV >> 8) & 0xFF);
+			bMessage[7]= (byte) (powerPV & 0xFF);
+		} else {
+			bMessage[6]= (byte) (powerPV & 0xFF);
+			bMessage[7]= (byte) ((powerPV >> 8) & 0xFF);
+		}
 
-		sb.append("Power Out " +  buildShort(bMessage[0], bMessage[1]) + " W, ");
+		if (isBigEndian) {
+			sb.append("Power Out " +  buildShort(bMessage[0], bMessage[1]) + " W, ");
+		} else {
+			sb.append("Power Out " +  buildShort(bMessage[1], bMessage[0]) + " W, ");
+		}
 		sb.append("Time to Recharge " +  bMessage[2] + " minutes, ");
 		sb.append("Time to Recharge " +  bMessage[3] + " s, ");
-		sb.append("Energy Out " +  buildShort(bMessage[4], bMessage[5]) + " Wh, ");
-		sb.append("Power PV " +  buildShort(bMessage[6], bMessage[7]) + " W");
+		if (isBigEndian) {
+			sb.append("Energy Out " +  buildShort(bMessage[4], bMessage[5]) + " Wh, ");
+		} else {
+			sb.append("Energy Out " +  buildShort(bMessage[5], bMessage[4]) + " Wh, ");
+		}
+		if (isBigEndian) {
+			sb.append("Power PV " +  buildShort(bMessage[6], bMessage[7]) + " W");
+		} else {
+			sb.append("Power PV " +  buildShort(bMessage[7], bMessage[6]) + " W");
+		}
 
 		sb.append(" and id = ");
 		sb.append(id);
@@ -438,23 +483,52 @@ public class CanSocketTest implements ConfigurableComponent {
 		int iOut= message3Info.getiOut();
 		int storageBatteryI= message3Info.getStorageBatteryI();
 
-		bCurrentDate[0]= (byte) ((vOut >> 8) & 0xFF); 
-		bCurrentDate[1]= (byte) ((vOut) & 0xFF); //V Out
+		if (isBigEndian) {
+			bCurrentDate[0]= (byte) ((vOut >> 8) & 0xFF); 
+			bCurrentDate[1]= (byte) ((vOut) & 0xFF); //V Out
+		}else{
+			bCurrentDate[0]= (byte) ((vOut) & 0xFF); //V Out
+			bCurrentDate[1]= (byte) ((vOut >> 8) & 0xFF); 
+		}
 
-		bCurrentDate[2]= (byte) ((storageBatteryV >> 8) & 0xFF); //Storage_Battery_V [V]
-		bCurrentDate[3]= (byte) (storageBatteryV & 0xFF); //Storage_Battery_V [V]
+		if (isBigEndian) {
+			bCurrentDate[2]= (byte) ((storageBatteryV >> 8) & 0xFF); //Storage_Battery_V [V]
+			bCurrentDate[3]= (byte) (storageBatteryV & 0xFF); //Storage_Battery_V [V]
+		} else {
+			bCurrentDate[2]= (byte) (storageBatteryV & 0xFF); //Storage_Battery_V [V]
+			bCurrentDate[3]= (byte) ((storageBatteryV >> 8) & 0xFF); //Storage_Battery_V [V]
+		}
 
-		bCurrentDate[4]= (byte) ((pvSystemV >> 8) & 0xFF); //PV_System_V [V]
-		bCurrentDate[5]= (byte) (pvSystemV & 0xFF); //PV_System_V [V]
+		if (isBigEndian) {
+			bCurrentDate[4]= (byte) ((pvSystemV >> 8) & 0xFF); //PV_System_V [V]
+			bCurrentDate[5]= (byte) (pvSystemV & 0xFF); //PV_System_V [V]
+		} else {
+			bCurrentDate[4]= (byte) (pvSystemV & 0xFF); //PV_System_V [V]
+			bCurrentDate[5]= (byte) ((pvSystemV >> 8) & 0xFF); //PV_System_V [V]
+		}
 
 		bCurrentDate[6]= (byte) iOut; //I_Out [A]
 
 		bCurrentDate[7]= (byte) storageBatteryI; //Storage_Battery_I [A]
 
 
-		sb.append("V Out: " +    buildShort(bCurrentDate[0], bCurrentDate[1]) + ", ");
-		sb.append("Storage_Battery_V: " +    buildShort(bCurrentDate[2], bCurrentDate[3]) + ", ");
-		sb.append("PV_System_V: " +    buildShort(bCurrentDate[4], bCurrentDate[5]) + ", ");
+		if (isBigEndian) {
+			sb.append("V Out: " +    buildShort(bCurrentDate[0], bCurrentDate[1]) + ", ");
+		}else{
+			sb.append("V Out: " +    buildShort(bCurrentDate[1], bCurrentDate[0]) + ", ");
+		}
+
+		if (isBigEndian) {
+			sb.append("Storage_Battery_V: " +    buildShort(bCurrentDate[2], bCurrentDate[3]) + ", ");
+		} else {
+			sb.append("Storage_Battery_V: " +    buildShort(bCurrentDate[3], bCurrentDate[2]) + ", ");
+		}
+
+		if (isBigEndian) {
+			sb.append("PV_System_V: " +    buildShort(bCurrentDate[4], bCurrentDate[5]) + ", ");
+		} else {
+			sb.append("PV_System_V: " +    buildShort(bCurrentDate[5], bCurrentDate[4]) + ", ");
+		}
 		sb.append("I_Out: " +     bCurrentDate[6] + ", ");
 		sb.append("Storage_Battery_I: " +   bCurrentDate[7]);
 

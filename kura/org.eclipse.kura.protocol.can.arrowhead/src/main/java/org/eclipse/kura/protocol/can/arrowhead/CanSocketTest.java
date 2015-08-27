@@ -21,6 +21,7 @@ public class CanSocketTest implements ConfigurableComponent {
 	private static final String ID_200_FREQUENCY= "can.id200.message.frequency";
 	private static final String ID_201_FREQUENCY= "can.id201.message.frequency";
 	private static final String ID_202_FREQUENCY= "can.id202.message.frequency";
+	private static final String IS_BIG_ENDIAN= "can.bigendian";
 
 	private CanConnectionService 	m_canConnection;
 	private Map<String,Object>   	m_properties;
@@ -37,6 +38,7 @@ public class CanSocketTest implements ConfigurableComponent {
 	private static int id200Freq;
 	private static int id201Freq;
 	private static int id202Freq;
+	private boolean isBigEndian= true;
 	
 	private volatile boolean senderRunning = true;
 	private volatile boolean receiverRunning = true;
@@ -63,6 +65,7 @@ public class CanSocketTest implements ConfigurableComponent {
 			currentDateInfo= populateCurrentDateInfo();
 			
 			getDelays();
+			isBigEndian= (Boolean) m_properties.get(IS_BIG_ENDIAN);
 		}
 
 		if(m_listenThread!=null){
@@ -119,6 +122,7 @@ public class CanSocketTest implements ConfigurableComponent {
 			currentDateInfo= populateCurrentDateInfo();
 			
 			getDelays();
+			isBigEndian= (Boolean) m_properties.get(IS_BIG_ENDIAN);
 		}
 		
 		stopSendThreads();
@@ -356,11 +360,27 @@ public class CanSocketTest implements ConfigurableComponent {
 		if(b!=null && b.length == 8){
 			StringBuilder sb = new StringBuilder("received : ");
 			
-			int powerOut= buildShort(b[0], b[1]);
+			int powerOut;
+			if (isBigEndian) {
+				powerOut= buildShort(b[0], b[1]);
+			} else {
+				powerOut= buildShort(b[1], b[0]);
+			}
 			int minutesToRecharge= b[2];
 			int secondsToRecharge= b[3];
-			int energyOut= buildShort(b[4], b[5]);
-			int powerPV= buildShort(b[6], b[7]);
+			
+			int energyOut;
+			if (isBigEndian) {
+				energyOut= buildShort(b[4], b[5]);
+			} else {
+				energyOut= buildShort(b[5], b[4]);
+			}
+			int powerPV;
+			if (isBigEndian) {
+				powerPV= buildShort(b[6], b[7]);
+			} else {
+				powerPV= buildShort(b[7], b[6]);
+			}
 			
 			sb.append("Power out: " + powerOut + " W, ");
 			sb.append("Minutes to recharge: " + minutesToRecharge + " minutes, ");
@@ -422,9 +442,27 @@ public class CanSocketTest implements ConfigurableComponent {
 		if(b!=null && b.length == 8){
 			StringBuilder sb = new StringBuilder("received : ");
 			
-			int vOut= buildShort(b[0], b[1]);
-			int storageBatteryV= buildShort(b[2], b[3]);
-			int pvSystemV= buildShort(b[4], b[5]);
+			int vOut;
+			if (isBigEndian) {
+				vOut= buildShort(b[0], b[1]);
+			} else {
+				vOut= buildShort(b[1], b[0]);
+			}
+			
+			int storageBatteryV;
+			if (isBigEndian) {
+				storageBatteryV= buildShort(b[2], b[3]);
+			} else {
+				storageBatteryV= buildShort(b[3], b[2]);
+			}
+			
+			int pvSystemV;
+			if (isBigEndian) {
+				pvSystemV= buildShort(b[4], b[5]);
+			} else {
+				pvSystemV= buildShort(b[5], b[4]);
+			}
+		
 			int iOut= b[6];
 			int storageBatteryI= b[7];
 			
@@ -512,8 +550,15 @@ public class CanSocketTest implements ConfigurableComponent {
 		bMessage[1]= (byte) bookingTimeMinute; //Booking time: minute
 		bMessage[2]= (byte) bookingDateDay; //Booking date: day
 		bMessage[3]= (byte) bookingDateMonth; //Booking date: month
-		bMessage[4]= (byte) ((bookingDateYear >> 8) & 0xFF); //Booking date: year
-		bMessage[5]= (byte) (bookingDateYear & 0xFF); //Booking date: year
+		
+		if (isBigEndian) {
+			bMessage[4]= (byte) ((bookingDateYear >> 8) & 0xFF); //Booking date: year
+			bMessage[5]= (byte) (bookingDateYear & 0xFF); //Booking date: year
+		} else {
+			bMessage[4]= (byte) (bookingDateYear & 0xFF); //Booking date: year
+			bMessage[5]= (byte) ((bookingDateYear >> 8) & 0xFF); //Booking date: year
+		}
+		
 		bMessage[6]= (byte) currentTimeHour; //Current time: hour
 		bMessage[7]= (byte) currentTimeMinute; //Current time: minute
 
@@ -521,7 +566,11 @@ public class CanSocketTest implements ConfigurableComponent {
 		sb.append("Booking time: minute " + bMessage[1] + ", ");
 		sb.append("Booking date: day " +    bMessage[2] + ", ");
 		sb.append("Booking date: month " +  bMessage[3] + ", ");
-		sb.append("Booking date: year " +   buildShort(bMessage[4], bMessage[5]) + ", ");
+		if (isBigEndian) {
+			sb.append("Booking date: year " +   buildShort(bMessage[4], bMessage[5]) + ", ");
+		} else {
+			sb.append("Booking date: year " +   buildShort(bMessage[5], bMessage[4]) + ", ");
+		}
 		sb.append("Current time: hour " +   bMessage[6] + ", ");
 		sb.append("Current time: minute " + bMessage[7]);
 
@@ -546,12 +595,22 @@ public class CanSocketTest implements ConfigurableComponent {
 
 		bCurrentDate[0]= (byte) currentDateDay; //Current date: day
 		bCurrentDate[1]= (byte) currentDateMonth; //Current date: month
-		bCurrentDate[2]= (byte) ((currentDateYear >> 8) & 0xFF); //Current date: year
-		bCurrentDate[3]= (byte) (currentDateYear & 0xFF); //Current date: year
+		
+		if (isBigEndian) {
+			bCurrentDate[2]= (byte) ((currentDateYear >> 8) & 0xFF); //Current date: year
+			bCurrentDate[3]= (byte) (currentDateYear & 0xFF); //Current date: year
+		} else {
+			bCurrentDate[2]= (byte) (currentDateYear & 0xFF); //Current date: year
+			bCurrentDate[3]= (byte) ((currentDateYear >> 8) & 0xFF); //Current date: year
+		}
 
 		sb.append("Current date: day " +     bCurrentDate[0] + ", ");
 		sb.append("Current date: month " +   bCurrentDate[1] + ", ");
-		sb.append("Current date: year " +    buildShort(bCurrentDate[2], bCurrentDate[3]));
+		if (isBigEndian) {
+			sb.append("Current date: year " +    buildShort(bCurrentDate[2], bCurrentDate[3]));
+		} else {
+			sb.append("Current date: year " +    buildShort(bCurrentDate[3], bCurrentDate[2]));
+		}
 
 		sb.append(" and id = ");
 		sb.append(id);

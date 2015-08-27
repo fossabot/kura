@@ -12,6 +12,14 @@
             default="can0"
             description="CAN socket Name."/>
             
+       <AD id="can.bigendian"
+            name="can.bigendian"
+            type="Boolean"
+            cardinality="0"
+            required="true"
+            default="true"
+            description="Select between big-endian or little-endian bytes order for multi-byte data."/>
+            
        <AD id="power.out"
             name="power.out"
             type="String"
