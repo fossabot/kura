@@ -186,7 +186,7 @@ public class CanSocketTest implements ConfigurableComponent {
 			@Override
 			public void run() {
 				try {
-					Thread.sleep(100 * 1);
+					Thread.sleep(threadsDelay * 1);
 				} catch (InterruptedException e) {
 				}
 				if(m_canConnection!=null){
@@ -219,7 +219,7 @@ public class CanSocketTest implements ConfigurableComponent {
 			@Override
 			public void run() {
 				try {
-					Thread.sleep(100 * 2);
+					Thread.sleep(threadsDelay * 2);
 				} catch (InterruptedException e) {
 				}
 				if(m_canConnection!=null){
