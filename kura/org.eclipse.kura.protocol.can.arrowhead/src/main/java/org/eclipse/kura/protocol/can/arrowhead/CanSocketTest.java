@@ -1,27 +1,42 @@
 package org.eclipse.kura.protocol.can.arrowhead;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.kura.KuraException;
+import org.eclipse.kura.cloud.CloudClient;
+import org.eclipse.kura.cloud.CloudClientListener;
+import org.eclipse.kura.cloud.CloudService;
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.ComponentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.eclipse.kura.message.KuraPayload;
 import org.eclipse.kura.protocol.can.CanConnectionService;
 import org.eclipse.kura.protocol.can.CanMessage;
+import org.eclipse.kura.protocol.can.cs.data.CSDataSnapshot;
 import org.eclipse.kura.protocol.can.recharge.BookingInfo;
 import org.eclipse.kura.protocol.can.recharge.CurrentDateInfo;
 import org.eclipse.kura.protocol.can.recharge.RechargeInfo;
 
 
-public class CanSocketTest implements ConfigurableComponent {
+public class CanSocketTest implements ConfigurableComponent, CloudClientListener {
 	private static final Logger s_logger = LoggerFactory.getLogger(CanSocketTest.class);
+	private static final String APP_ID = "can_publisher";
+
 	private static final String THREAD_DELAY= "can.initial.threads.delay";
 	private static final String ID_200_FREQUENCY= "can.id200.message.frequency";
 	private static final String ID_201_FREQUENCY= "can.id201.message.frequency";
 	private static final String ID_202_FREQUENCY= "can.id202.message.frequency";
 	private static final String IS_BIG_ENDIAN= "can.bigendian";
+
+	private static final String   PUBLISH_RATE_PROP_NAME   = "publish.rate";
 
 	private CanConnectionService 	m_canConnection;
 	private Map<String,Object>   	m_properties;
@@ -31,6 +46,9 @@ public class CanSocketTest implements ConfigurableComponent {
 	private Thread 					m_sendThread3;
 	private String					m_ifName;
 
+	private CloudService 			m_cloudService;
+	private CloudClient      		m_cloudClient;
+
 	private RechargeInfo rechargeInfo;
 	private BookingInfo bookingInfo;
 	private CurrentDateInfo currentDateInfo;
@@ -39,9 +57,23 @@ public class CanSocketTest implements ConfigurableComponent {
 	private static int id201Freq;
 	private static int id202Freq;
 	private boolean isBigEndian= true;
-	
+
 	private volatile boolean senderRunning = true;
 	private volatile boolean receiverRunning = true;
+
+	private CSDataSnapshot csReceivedData= new CSDataSnapshot();
+	private Thread m_publishThread;
+
+
+	// ----------------------------------------------------------------
+	//
+	//   Dependencies
+	//
+	// ----------------------------------------------------------------
+
+	public CanSocketTest() {
+		super();
+	}
 
 	public void setCanConnectionService(CanConnectionService canConnection) {
 		this.m_canConnection = canConnection;
@@ -50,6 +82,15 @@ public class CanSocketTest implements ConfigurableComponent {
 	public void unsetCanConnectionService(CanConnectionService canConnection) {
 		this.m_canConnection = null;
 	}
+
+	public void setCloudService(CloudService cloudService) {
+		m_cloudService = cloudService;
+	}
+
+	public void unsetCloudService(CloudService cloudService) {
+		m_cloudService = null;
+	}
+
 
 	protected void activate(ComponentContext componentContext, Map<String,Object> properties) {
 		m_properties = properties;
@@ -63,7 +104,7 @@ public class CanSocketTest implements ConfigurableComponent {
 			rechargeInfo= populateRechargeInfo();
 			bookingInfo= populateBookingInfo();
 			currentDateInfo= populateCurrentDateInfo();
-			
+
 			getDelays();
 			isBigEndian= (Boolean) m_properties.get(IS_BIG_ENDIAN);
 		}
@@ -92,6 +133,38 @@ public class CanSocketTest implements ConfigurableComponent {
 		m_listenThread.start();
 
 		startSendThreads();
+
+		// get the mqtt client for this application
+		try  {
+
+			// Acquire a Cloud Application Client for this Application 
+			s_logger.info("Getting CloudClient for {}...", APP_ID);
+			m_cloudClient = m_cloudService.newCloudClient(APP_ID);
+			m_cloudClient.addCloudClientListener(this);
+		}
+		catch (Exception e) {
+			s_logger.error("Error during component activation", e);
+			throw new ComponentException(e);
+		}
+
+		m_publishThread = new Thread(new Runnable() {		
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+				}
+				while(receiverRunning){
+					doPublish();
+					s_logger.debug("Publish thread sleeping for: " + 2000);
+					try {
+						Thread.sleep(2000);
+					} catch (InterruptedException e) {
+					}
+				}
+			}
+		});
+		m_publishThread.start();
 	}
 
 	protected void deactivate(ComponentContext componentContext) {
@@ -105,12 +178,26 @@ public class CanSocketTest implements ConfigurableComponent {
 			}
 		}
 		m_listenThread=null;
-		
+
 		stopSendThreads();
+
+		// shutting down the worker and cleaning up the properties
+		if(m_publishThread!=null){
+			m_listenThread.interrupt();
+			try {
+				m_publishThread.join(100);
+			} catch (InterruptedException e) {
+				// Ignore
+			}
+		}
+		m_publishThread=null;
+
+		// Releasing the CloudApplicationClient
+		s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
+		m_cloudClient.release();
 	}
-	
-	public void updated(Map<String,Object> properties)
-	{
+
+	public void updated(Map<String,Object> properties) {
 		s_logger.debug("updated...");		
 
 		m_properties = properties;
@@ -120,24 +207,106 @@ public class CanSocketTest implements ConfigurableComponent {
 			rechargeInfo= populateRechargeInfo();
 			bookingInfo= populateBookingInfo();
 			currentDateInfo= populateCurrentDateInfo();
-			
+
 			getDelays();
 			isBigEndian= (Boolean) m_properties.get(IS_BIG_ENDIAN);
 		}
-		
+
 		stopSendThreads();
 		senderRunning= true;
 		startSendThreads();
+
 	}
-	
+
+	public void doReceiveTest() {
+		CanMessage cm = null;
+		s_logger.debug("Waiting for a request");
+		try {
+			cm = m_canConnection.receiveCanMessage(-1,0x7FF);
+		} catch (KuraException e) {
+			s_logger.warn("CanConnection Crash! -> KuraException");			
+			e.printStackTrace();
+		} catch (IOException e) {
+			s_logger.warn("CanConnection Crash! -> IOException");			
+			e.printStackTrace();
+		}
+
+		if (cm != null) {
+			int canId= cm.getCanId();
+			s_logger.info("Received can message with Id: " + canId);
+
+			if (canId == 0x100) {
+				parseCanMessage1(cm);
+			} else if (canId == 0x101) {
+				parseCanMessage2(cm);
+			} else if (canId == 0x102) {
+				parseCanMessage3(cm);
+			}
+		}
+		else{
+			s_logger.warn("receive=null");
+		}		
+	}
+
+
+	// ----------------------------------------------------------------
+	//
+	//   Cloud Application Callback Methods
+	//
+	// ----------------------------------------------------------------
+
+	@Override
+	public void onControlMessageArrived(String deviceId, String appTopic,
+			KuraPayload msg, int qos, boolean retain) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onMessageArrived(String deviceId, String appTopic,
+			KuraPayload msg, int qos, boolean retain) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onConnectionLost() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onConnectionEstablished() {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onMessageConfirmed(int messageId, String appTopic) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void onMessagePublished(int messageId, String appTopic) {
+		// TODO Auto-generated method stub
+
+	}
+
+	// ----------------------------------------------------------------
+	//
+	//   Private Methods
+	//
+	// ----------------------------------------------------------------
+
 	private void getDelays() {
 		threadsDelay = Integer.parseInt((String) m_properties.get(THREAD_DELAY));
 		id200Freq = Integer.parseInt((String) m_properties.get(ID_200_FREQUENCY));
 		id201Freq = Integer.parseInt((String) m_properties.get(ID_201_FREQUENCY));
 		id202Freq = Integer.parseInt((String) m_properties.get(ID_202_FREQUENCY));
-		
+
 	}
-	
+
 	private void startSendThreads(){
 		if(m_sendThread1!=null){
 			m_sendThread1.interrupt();
@@ -170,7 +339,7 @@ public class CanSocketTest implements ConfigurableComponent {
 			}
 		});
 		m_sendThread1.start();
-		
+
 		if(m_sendThread2!=null){
 			m_sendThread2.interrupt();
 			try {
@@ -202,8 +371,8 @@ public class CanSocketTest implements ConfigurableComponent {
 			}
 		});
 		m_sendThread2.start();
-		
-		
+
+
 		if(m_sendThread3!=null){
 			m_sendThread3.interrupt();
 			try {
@@ -236,7 +405,7 @@ public class CanSocketTest implements ConfigurableComponent {
 		});
 		m_sendThread3.start();
 	}
-	
+
 	private void stopSendThreads(){
 		if(m_sendThread1!=null){
 			m_sendThread1.interrupt();
@@ -248,8 +417,8 @@ public class CanSocketTest implements ConfigurableComponent {
 			}
 		}
 		m_sendThread1=null;
-		
-		
+
+
 		if(m_sendThread2!=null){
 			m_sendThread2.interrupt();
 			try {
@@ -260,8 +429,8 @@ public class CanSocketTest implements ConfigurableComponent {
 			}
 		}
 		m_sendThread2=null;
-		
-		
+
+
 		if(m_sendThread3!=null){
 			m_sendThread3.interrupt();
 			try {
@@ -324,42 +493,12 @@ public class CanSocketTest implements ConfigurableComponent {
 		return cdi;
 	}
 
-	public void doReceiveTest() {
-		CanMessage cm = null;
-		s_logger.debug("Waiting for a request");
-		try {
-			cm = m_canConnection.receiveCanMessage(-1,0x7FF);
-		} catch (KuraException e) {
-			s_logger.warn("CanConnection Crash! -> KuraException");			
-			e.printStackTrace();
-		} catch (IOException e) {
-			s_logger.warn("CanConnection Crash! -> IOException");			
-			e.printStackTrace();
-		}
-		
-		if (cm != null) {
-			int canId= cm.getCanId();
-			s_logger.info("Received can message with Id: " + canId);
-
-			if (canId == 0x100) {
-				parseCanMessage1(cm);
-			} else if (canId == 0x101) {
-				parseCanMessage2(cm);
-			} else if (canId == 0x102) {
-				parseCanMessage3(cm);
-			}
-		}
-		else{
-			s_logger.warn("receive=null");
-		}		
-	}
-
 	private void parseCanMessage1(CanMessage cm){
 		byte[] b = null;
 		b = cm.getData();
 		if(b!=null && b.length == 8){
 			StringBuilder sb = new StringBuilder("received : ");
-			
+
 			int powerOut;
 			if (isBigEndian) {
 				powerOut= buildShort(b[0], b[1]);
@@ -368,7 +507,7 @@ public class CanSocketTest implements ConfigurableComponent {
 			}
 			int minutesToRecharge= b[2];
 			int secondsToRecharge= b[3];
-			
+
 			int energyOut;
 			if (isBigEndian) {
 				energyOut= buildShort(b[4], b[5]);
@@ -381,20 +520,25 @@ public class CanSocketTest implements ConfigurableComponent {
 			} else {
 				powerPV= buildShort(b[7], b[6]);
 			}
-			
+
 			sb.append("Power out: " + powerOut + " W, ");
 			sb.append("Minutes to recharge: " + minutesToRecharge + " minutes, ");
 			sb.append("Seconds to recharge: " + secondsToRecharge + " seconds, ");
 			sb.append("Energy out: " + energyOut + " Wh, ");
 			sb.append("Power PV: " + powerPV + " W");
-			
-//			for(int i=0; i<b.length; i++){
-//				sb.append(b[i]);
-//				sb.append(";");
-//			}
+
+			//			for(int i=0; i<b.length; i++){
+			//				sb.append(b[i]);
+			//				sb.append(";");
+			//			}
 			sb.append(" on id = ");
 			sb.append(cm.getCanId());			
 			s_logger.debug(sb.toString());
+
+			csReceivedData.setPowerOut(powerOut);
+			csReceivedData.setTimeToRecharge(minutesToRecharge, secondsToRecharge);
+			csReceivedData.setEnergy(energyOut);
+			csReceivedData.setPowerPV(powerPV);
 		}
 	}
 
@@ -403,7 +547,7 @@ public class CanSocketTest implements ConfigurableComponent {
 		b = cm.getData();
 		if(b!=null && b.length == 5){
 			StringBuilder sb = new StringBuilder("received : ");
-			
+
 			int faultFlag= b[0] & 0x01;
 			int rechargeAvailable= (b[0] & 0x02) >> 1;
 			int rechargeInProgress= (b[0] & 0x04) >> 2;
@@ -411,12 +555,12 @@ public class CanSocketTest implements ConfigurableComponent {
 			int auxChargerActive= (b[0] & 0x10) >> 4;
 			int storageBatteryConcactorSts= (b[0] & 0x20) >> 5;
 			int converterConcactorSts= (b[0] & 0x40) >> 6;
-			
+
 			int faultString= b[1];
 			int igbtTemperature= b[2];
 			int storageBatteryTemperature= b[3];
 			int storageBatterySOC= b[4];
-			
+
 			sb.append("Fault flag: " + faultFlag + ", ");
 			sb.append("Recharge available: " + rechargeAvailable + ", ");
 			sb.append("Recharge in progress: " + rechargeInProgress + ", ");
@@ -424,15 +568,25 @@ public class CanSocketTest implements ConfigurableComponent {
 			sb.append("Aux charger active: " + auxChargerActive + ", ");
 			sb.append("Storage Battery Concactor Sts: " + storageBatteryConcactorSts + ", ");
 			sb.append("Converter Contactor Sts: " + converterConcactorSts + ", ");
-			
+
 			sb.append("Fault string: " + faultString + ", ");
 			sb.append("IGBT Temperature: " + igbtTemperature + " celsius, ");
 			sb.append("Storage Battery Temperature: " + storageBatteryTemperature + " celsius, ");
 			sb.append("Storage Battery SOC: " + storageBatterySOC + "celsius");
-			
+
 			sb.append(" on id = ");
 			sb.append(cm.getCanId());			
 			s_logger.debug(sb.toString());
+			
+			csReceivedData.setRechargeAvail(rechargeAvailable);
+			csReceivedData.setRechargeInProgress(rechargeInProgress);
+			csReceivedData.setPVSystemActive(pvSystemActive);
+			csReceivedData.setAuxChargerActive(auxChargerActive);
+			csReceivedData.setStorageBatterySts(storageBatteryConcactorSts);
+			csReceivedData.setConverterContactorSts(converterConcactorSts);
+			csReceivedData.setIGBTTemp(igbtTemperature);
+			csReceivedData.setStorageBatteryTemp(storageBatteryTemperature);
+			csReceivedData.setStorageBatterySOC(storageBatterySOC);
 		}
 	}
 
@@ -441,44 +595,51 @@ public class CanSocketTest implements ConfigurableComponent {
 		b = cm.getData();
 		if(b!=null && b.length == 8){
 			StringBuilder sb = new StringBuilder("received : ");
-			
+
 			int vOut;
 			if (isBigEndian) {
 				vOut= buildShort(b[0], b[1]);
 			} else {
 				vOut= buildShort(b[1], b[0]);
 			}
-			
+
 			int storageBatteryV;
 			if (isBigEndian) {
 				storageBatteryV= buildShort(b[2], b[3]);
 			} else {
 				storageBatteryV= buildShort(b[3], b[2]);
 			}
-			
+
 			int pvSystemV;
 			if (isBigEndian) {
 				pvSystemV= buildShort(b[4], b[5]);
 			} else {
 				pvSystemV= buildShort(b[5], b[4]);
 			}
-		
+
 			int iOut= b[6];
 			int storageBatteryI= b[7];
-			
+
 			sb.append("V out: " + vOut + " V, ");
 			sb.append("Storage Battery V: " + storageBatteryV + " V, ");
 			sb.append("PV System V: " + pvSystemV + " V, ");
 			sb.append("I out: " + iOut + " A, ");
 			sb.append("Storage Battery I: " + storageBatteryI + " A");
-			
+
 			sb.append(" on id = ");
 			sb.append(cm.getCanId());			
 			s_logger.debug(sb.toString());
+			
+			csReceivedData.setVOut(vOut);
+			csReceivedData.setStorageBatteryV(storageBatteryV);
+			csReceivedData.setPVSystemV(pvSystemV);
+			csReceivedData.setIOut(iOut);
+			csReceivedData.setStorageBatteryI(storageBatteryI);
+			csReceivedData.increaseIndex();
 		}
 	}
 
-	public void doSend1Test() {
+	private void doSend1Test() {
 		try {
 			sendMessage1(m_ifName);
 		} catch (Exception e) {
@@ -486,8 +647,8 @@ public class CanSocketTest implements ConfigurableComponent {
 			e.printStackTrace();
 		}
 	}
-	
-	public void doSend2Test() {
+
+	private void doSend2Test() {
 		try {
 			sendMessage2(m_ifName);
 		} catch (Exception e) {
@@ -495,8 +656,8 @@ public class CanSocketTest implements ConfigurableComponent {
 			e.printStackTrace();
 		}
 	}
-	
-	public void doSend3Test() {
+
+	private void doSend3Test() {
 		try {
 			sendMessage3(m_ifName);
 		} catch (Exception e) {
@@ -550,7 +711,7 @@ public class CanSocketTest implements ConfigurableComponent {
 		bMessage[1]= (byte) bookingTimeMinute; //Booking time: minute
 		bMessage[2]= (byte) bookingDateDay; //Booking date: day
 		bMessage[3]= (byte) bookingDateMonth; //Booking date: month
-		
+
 		if (isBigEndian) {
 			bMessage[4]= (byte) ((bookingDateYear >> 8) & 0xFF); //Booking date: year
 			bMessage[5]= (byte) (bookingDateYear & 0xFF); //Booking date: year
@@ -558,7 +719,7 @@ public class CanSocketTest implements ConfigurableComponent {
 			bMessage[4]= (byte) (bookingDateYear & 0xFF); //Booking date: year
 			bMessage[5]= (byte) ((bookingDateYear >> 8) & 0xFF); //Booking date: year
 		}
-		
+
 		bMessage[6]= (byte) currentTimeHour; //Current time: hour
 		bMessage[7]= (byte) currentTimeMinute; //Current time: minute
 
@@ -595,7 +756,7 @@ public class CanSocketTest implements ConfigurableComponent {
 
 		bCurrentDate[0]= (byte) currentDateDay; //Current date: day
 		bCurrentDate[1]= (byte) currentDateMonth; //Current date: month
-		
+
 		if (isBigEndian) {
 			bCurrentDate[2]= (byte) ((currentDateYear >> 8) & 0xFF); //Current date: year
 			bCurrentDate[3]= (byte) (currentDateYear & 0xFF); //Current date: year
@@ -622,5 +783,58 @@ public class CanSocketTest implements ConfigurableComponent {
 
 	private int buildShort(byte high, byte low){
 		return ((0xFF & (int) high) << 8) + ((0xFF & (int) low));
+	}
+
+
+	/**
+	 * Called at the configured rate to publish the next aggregated measurement.
+	 */
+	private void doPublish() {				
+		// fetch the publishing configuration from the publishing properties
+		String  topic  = "csdata";
+		Integer qos    = 0;
+		Boolean retain = false;
+
+		// Allocate a new payload
+		KuraPayload payload = new KuraPayload();
+
+		// Timestamp the message
+		payload.setTimestamp(new Date());
+
+
+		// Add all the needed data to the payload
+		payload.addMetric("Power_Out", csReceivedData.getPowerOut());
+		payload.addMetric("Minutes_to_Recharge_Estimated", csReceivedData.getMinutesToRecharge());
+		payload.addMetric("Seconds_to_Recharge_Estimated",  csReceivedData.getSecondsToRecharge());
+		payload.addMetric("Energy_Out",  csReceivedData.getEnergyOut());
+		payload.addMetric("Power_PV",  csReceivedData.getPowerPV());
+		
+		payload.addMetric("Recharge_Available", csReceivedData.getRechargeAvailable());
+		payload.addMetric("Recharge_In_Progress", csReceivedData.getRechargeInProgress());
+		payload.addMetric("PV_System_Active",  csReceivedData.getPvSystemActive());
+		payload.addMetric("Aux_Charger_Active",  csReceivedData.getAuxChargerActive());
+		payload.addMetric("Storage_Battery_Concactor_Sts",  csReceivedData.getStorageBatterySts());
+		payload.addMetric("Converter_Contactor_Sts",  csReceivedData.getConverterContactorSts());
+		payload.addMetric("IGBT_Temperature",  csReceivedData.getIgbtTemp());
+		payload.addMetric("Storage_Battery_Temperature",  csReceivedData.getStorageBatteryTemp());
+		payload.addMetric("Storage_Battery_SOC",  csReceivedData.getStorageBatterySOC());
+		
+		payload.addMetric("V_Out ", csReceivedData.getvOut());
+		payload.addMetric("Storage_Battery_V", csReceivedData.getStorageBatteryV());
+		payload.addMetric("PV_System_V",  csReceivedData.getPvSystemV());
+		payload.addMetric("I_Out",  csReceivedData.getiOut());
+		payload.addMetric("Storage_Battery_I ",  csReceivedData.getStorageBatteryI());
+		
+
+		csReceivedData.resetData();
+
+		// Publish the message
+		try {
+			m_cloudClient.publish(topic, payload, qos, retain);
+			s_logger.info("Published to {} message: {}", topic, payload);
+		} 
+		catch (Exception e) {
+			s_logger.error("Cannot publish topic: "+topic, e);
+		}
 	}
 }
