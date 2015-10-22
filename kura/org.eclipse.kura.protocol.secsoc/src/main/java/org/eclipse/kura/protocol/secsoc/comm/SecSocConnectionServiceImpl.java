@@ -58,8 +58,46 @@ public class SecSocConnectionServiceImpl implements SecSocConnectionService{
 	public SecSocMessage receiveSecSocMessage()
 			throws KuraException, IOException {
 		// TODO Auto-generated method stub
+		boolean echo= false;
+		
+		if (m_iStream != null) {
+			
+
+			int c = -1;
+			StringBuilder sb = new StringBuilder();
+
+			while (m_iStream != null) {
+
+				if (m_iStream.available() != 0) {
+					c = m_iStream.read();
+				} else {
+					try {
+						Thread.sleep(100);
+						continue;
+					} catch (InterruptedException e) {
+						return null;
+					}
+				}
+				
+				if (echo && m_oStream != null) {
+					m_oStream.write((char) c);
+				}
+
+				
+				
+				// on reception of CR, publish the received sentence
+				if (c==13) {
+
+
+
+					sb = new StringBuilder();
+
+				} else if (c!=10) {
+					sb.append((byte) c);
+				}					
+			}
+		} 
+
 		return null;
 	}
-
-
 }
