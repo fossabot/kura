@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" activate="activate" deactivate="deactivate" enabled="true" immediate="true" configuration-policy="require" name="org.eclipse.kura.protocol.secsoc.SecSocTest">
+   <implementation class="org.eclipse.kura.protocol.secsoc.SecSocTest"/>
+   <service>
+      <provide interface="org.eclipse.kura.protocol.secsoc.SecSocTest"/>
+   </service>
+   <property name="service.pid" value="org.eclipse.kura.protocol.secsoc.SecSocTest"/>
+   
+   <reference name="CloudService"
+              policy="static"
+              bind="setCloudService"       
+              unbind="unsetCloudService"       
+              cardinality="1..1" 
+              interface="org.eclipse.kura.cloud.CloudService"/>
+   <reference bind="setConnectionFactory" 
+   			  cardinality="1..1" 
+   			  interface="org.osgi.service.io.ConnectionFactory" 
+   			  name="ConnectionFactory" 
+   			  policy="static" 
+   			  unbind="unsetConnectionFactory"/>
+</scr:component>
