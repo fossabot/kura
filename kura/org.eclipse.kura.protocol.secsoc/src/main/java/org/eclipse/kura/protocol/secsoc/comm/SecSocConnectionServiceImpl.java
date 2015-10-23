@@ -86,10 +86,12 @@ public class SecSocConnectionServiceImpl implements SecSocConnectionService{
 
 				
 				
-				// on reception of CR, publish the received sentence
-				if (c==13) {
+				if (true) { //ended message
 
+					SecSocMessage ssm= new SecSocMessage(messageData);
 
+					ssm.parseHeader();
+					ssm.parseBody();
 
 					sb = new StringBuilder();
 

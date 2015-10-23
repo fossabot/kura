@@ -3,18 +3,18 @@ package org.eclipse.kura.protocol.secsoc.message;
 public class SecSocJpegPayload {
 	
 	private int   jpegSize;
-	private int[] jpegPic;
+	private byte[] jpegPic;
 	
 	public int getJpegSize() {
 		return jpegSize;
 	}
-	public int[] getJpegPic() {
+	public byte[] getJpegPic() {
 		return jpegPic;
 	}
 	public void setJpegSize(int jpegSize) {
 		this.jpegSize = jpegSize;
 	}
-	public void setJpegPic(int[] jpegPic) {
-		this.jpegPic = jpegPic;
+	public void setJpegPic(byte[] jpegPic2) {
+		this.jpegPic = jpegPic2;
 	}
 }

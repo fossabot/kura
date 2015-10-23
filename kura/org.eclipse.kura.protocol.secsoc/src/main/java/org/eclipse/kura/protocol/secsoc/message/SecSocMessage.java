@@ -3,6 +3,7 @@ package org.eclipse.kura.protocol.secsoc.message;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.eclipse.kura.KuraException;
 import org.eclipse.kura.protocol.secsoc.SecSocTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ public class SecSocMessage {
 	private static final int TYPE_LINES = 0x10;
 	private static final int TYPE_BLOBS = 0x20;
 	
+	private byte[] messageData;
 	
 	private int packetLength;
 	private int frameNum;
@@ -27,11 +29,7 @@ public class SecSocMessage {
 
 	
 	public SecSocMessage(byte[] data){
-		byte[] headerData= Arrays.copyOfRange(data, 0, 15);
-		parseHeader(headerData);
-		
-		byte[] bodyData= Arrays.copyOfRange(data, 15, data.length - 8);
-		parseBody(bodyData);
+		this.messageData= data;
 	}
 	
 	public int getPacketLength() {
@@ -65,11 +63,12 @@ public class SecSocMessage {
 		this.payload = payload;
 	}
 
-	private void parseHeader(byte[] data){
+	public void parseHeader(){
+		byte[] headerData= Arrays.copyOfRange(messageData, 0, 15);
 		byte[] packetLength= new byte[4];
 		int index= 0;
 		for (int i=4; i<8; i++, index++){
-			packetLength[index]= data[i];
+			packetLength[index]= headerData[i];
 		}
 		ByteBuffer wrapped = ByteBuffer.wrap(packetLength); // big-endian by default --> check!!!!
 		int packetLengthInt= wrapped.getInt();
@@ -79,7 +78,7 @@ public class SecSocMessage {
 		byte[] frameNumber= new byte[2];
 		index= 0;
 		for (int i=8; i<10; i++, index++){
-			frameNumber[index]= data[i];
+			frameNumber[index]= headerData[i];
 		}
 		wrapped = ByteBuffer.wrap(frameNumber);
 		int frameNumberInt= wrapped.getShort();
@@ -87,7 +86,7 @@ public class SecSocMessage {
 		
 		
 		byte[] messageType= new byte[1];
-		messageType[0]= data[10];
+		messageType[0]= headerData[10];
 		wrapped = ByteBuffer.wrap(messageType); // big-endian by default --> check!!!!
 		int messageTypeInt = wrapped.getShort(); 
 		setMesgType(messageTypeInt);
@@ -96,18 +95,24 @@ public class SecSocMessage {
 		byte[] extraData= new byte[4];
 		index= 0;
 		for (int i=11; i<15; i++, index++){
-			extraData[index]= data[i];
+			extraData[index]= headerData[i];
 		}
 		wrapped = ByteBuffer.wrap(extraData); // big-endian by default --> check!!!!
 		int extraDataInt = wrapped.getInt(); 
 		setExtraData(extraDataInt);
 	}
 	
-	private void parseBody(byte[] bodyData){
+	public void parseBody() throws KuraException{
+		byte[] bodyData= Arrays.copyOfRange(messageData, 15, messageData.length - 8);
 		int messageType= getMesgType();
 		switch (messageType) {
 			case TYPE_JPEG: payload= SecSocJpegPayloadMapper.parseJpegPayload(bodyData);
 							break;
+			case TYPE_BIN:
+			case TYPE_KP:
+			case TYPE_AREAS:
+			case TYPE_LINES:
+			case TYPE_BLOBS:
 			default: s_logger.info("Unsupported secsoc message payload");
 					 break;
 		}
