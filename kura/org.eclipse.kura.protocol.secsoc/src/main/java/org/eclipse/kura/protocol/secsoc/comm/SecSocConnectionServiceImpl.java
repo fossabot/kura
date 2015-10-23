@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.comm.CommConnection;
 import org.eclipse.kura.comm.CommURI;
+import org.eclipse.kura.protocol.secsoc.message.SecSocMessage;
 import org.osgi.service.io.ConnectionFactory;
 
 public class SecSocConnectionServiceImpl implements SecSocConnectionService{

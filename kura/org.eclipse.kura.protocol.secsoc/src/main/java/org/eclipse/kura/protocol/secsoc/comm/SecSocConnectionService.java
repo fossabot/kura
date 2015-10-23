@@ -3,6 +3,7 @@ package org.eclipse.kura.protocol.secsoc.comm;
 import java.io.IOException;
 
 import org.eclipse.kura.KuraException;
+import org.eclipse.kura.protocol.secsoc.message.SecSocMessage;
 import org.osgi.service.io.ConnectionFactory;
 
 /**
