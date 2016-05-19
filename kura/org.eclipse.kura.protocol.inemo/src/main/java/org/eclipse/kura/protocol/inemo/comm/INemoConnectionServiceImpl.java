@@ -3,14 +3,18 @@ package org.eclipse.kura.protocol.inemo.comm;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Vector;
 
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.comm.CommConnection;
 import org.eclipse.kura.comm.CommURI;
 import org.eclipse.kura.protocol.inemo.message.INemoMessage;
 import org.osgi.service.io.ConnectionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class INemoConnectionServiceImpl implements INemoConnectionService{
+	private static final Logger s_logger = LoggerFactory.getLogger(INemoConnectionServiceImpl.class);
 
 	private CommConnection m_connection;
 	private InputStream m_iStream;
@@ -51,6 +55,9 @@ public class INemoConnectionServiceImpl implements INemoConnectionService{
 	@Override
 	public void sendMessage(byte[] message) throws KuraException, IOException {
 
+		if (m_oStream != null) {
+			m_oStream.write(message);
+		}
 	}
 
 	@Override
@@ -61,7 +68,7 @@ public class INemoConnectionServiceImpl implements INemoConnectionService{
 			
 
 			int c = -1;
-			StringBuilder sb = new StringBuilder();
+			Vector<Integer> sb= new Vector<Integer>();
 
 			while (m_iStream != null) {
 
@@ -79,21 +86,34 @@ public class INemoConnectionServiceImpl implements INemoConnectionService{
 				if (echo && m_oStream != null) {
 					m_oStream.write((char) c);
 				}
-
+				s_logger.info("Received: {}", sb.toString());
+				if (c == 0x76) {
+					sb = new Vector<Integer>();
+					sb.addElement(c);
+				} else {
+					sb.addElement(c);
+				}
 				
+				if (sb.size() > 2) {
+					int size= sb.elementAt(1);
+					if (sb.size()-3 == size) {
+						//parse body
+						s_logger.info("Received: {}", sb.toString());
+					}
+				}
 				
-				if (true) { //ended message
-
-					INemoMessage ssm= new INemoMessage(null); //messageData
-
-					ssm.parseHeader();
-					ssm.parseBody();
-
-					sb = new StringBuilder();
-
-				} else if (c!=10) {
-					sb.append((byte) c);
-				}					
+//				if (true) { //ended message
+//
+//					INemoMessage ssm= new INemoMessage(null); //messageData
+//
+//					ssm.parseHeader();
+//					ssm.parseBody();
+//
+//					sb = new StringBuilder();
+//
+//				} else if (c!=10) {
+//					sb.append((byte) c);
+//				}					
 			}
 		} 
 

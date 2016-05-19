@@ -52,8 +52,10 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 	private ConnectionFactory m_connectionFactory;
 
 
-	private ScheduledExecutorService m_worker;
-	private Future<?>           m_handle;
+	private ScheduledExecutorService m_writerWorker;
+	private ScheduledExecutorService m_listenerWorker;
+	private Future<?>           m_writerHandle;
+	private Future<?>           m_listenerHandle;
 
 	private Map<String, Object> m_properties;
 
@@ -65,7 +67,8 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 
 	public INemoTest(){
 		super();
-		m_worker = Executors.newSingleThreadScheduledExecutor();
+		m_writerWorker = Executors.newSingleThreadScheduledExecutor();
+		m_listenerWorker = Executors.newSingleThreadScheduledExecutor();
 	}
 
 	public void setCloudService(CloudService cloudService) {
@@ -117,10 +120,12 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 	protected void deactivate(ComponentContext componentContext){
 		s_logger.info("Deactivating INEMO test...");
 
-		m_handle.cancel(true);
+		m_listenerHandle.cancel(true);
+		m_writerHandle.cancel(true);
 
 		// shutting down the worker and cleaning up the properties
-		m_worker.shutdownNow();
+		m_writerWorker.shutdownNow();
+		m_listenerWorker.shutdownNow();
 
 		// Releasing the CloudApplicationClient
 		s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
@@ -201,8 +206,11 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 			}
 
 			// cancel a current worker handle if one if active
-			if (m_handle != null) {
-				m_handle.cancel(true);
+			if (m_listenerHandle != null) {
+				m_listenerHandle.cancel(true);
+			}
+			if (m_writerHandle != null) {
+				m_writerHandle.cancel(true);
 			}
 
 			String topic = (String) m_properties.get(PUBLISH_TOPIC_PROP_NAME);
@@ -231,10 +239,29 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 				}
 			}
 
-			m_handle = m_worker.submit(new Runnable() {		
+			m_writerHandle = m_writerWorker.submit(new Runnable() {		
 				@Override
 				public void run() {
-					//doSerial();
+					boolean exec= true;
+					while (exec) {
+						doSerial();
+						exec= false;
+					}
+				}
+			});
+			m_listenerHandle = m_listenerWorker.submit(new Runnable() {		
+				@Override
+				public void run() {
+					boolean exec= true;
+					while (exec) {
+						try {
+							m_connService.receiveMessage();
+						} catch (KuraException e) {
+							s_logger.warn("Exception!!!!!!!");
+						} catch (IOException e) {
+							s_logger.warn("Exception!!!!!!!");
+						}
+					}
 				}
 			});
 		} catch (Throwable t) {
@@ -306,65 +333,86 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 		Boolean retain = (Boolean) m_properties.get(PUBLISH_RETAIN_PROP_NAME);
 
 		Boolean echo = (Boolean) m_properties.get(SERIAL_ECHO_PROP_NAME);
+		
+		int header= 0x76 & 0xFF;
+		int length= 0x01 & 0xFF;
+		int payload= 0x00 & 0xFF;
+		int checksum= (header + length + payload) & 0xFF;
+		
+		byte bMessage[] = new byte[4];
+		bMessage[0]= (byte) header;
+		bMessage[1]= (byte) length;
+		bMessage[2]= (byte) payload;
+		bMessage[3]= (byte) checksum;
+		
+		try {
+			m_connService.sendMessage(bMessage);
+		} catch (KuraException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
-		//		if (m_commIs != null) {
-		//
-		//			try {
-		//				int c = -1;
-		//				StringBuilder sb = new StringBuilder();
-		//
-		//				while (m_commIs != null) {
-		//
-		//					if (m_commIs.available() != 0) {
-		//						c = m_commIs.read();
-		//					} else {
-		//						try {
-		//							Thread.sleep(100);
-		//							continue;
-		//						} catch (InterruptedException e) {
-		//							return;
-		//						}
-		//					}
-		//
-		//					if (echo && m_commOs != null) {
-		//						m_commOs.write((char) c);
-		//					}
-		//
-		//					// on reception of CR, publish the received sentence
-		//					if (c==13) {
-		//
-		//						// Allocate a new payload
-		//						KuraPayload payload = new KuraPayload();
-		//
-		//						// Timestamp the message
-		//						payload.setTimestamp(new Date());
-		//
-		//						payload.addMetric("line", sb.toString());
-		//
-		//						// Publish the message
-		//						try {
-		//							m_cloudClient.publish(topic, payload, qos, retain);
-		//							s_logger.info("Published to {} message: {}", topic, payload);
-		//						} 
-		//						catch (Exception e) {
-		//							s_logger.error("Cannot publish topic: "+topic, e);
-		//						}
-		//
-		//						sb = new StringBuilder();
-		//
-		//					} else if (c!=10) {
-		//						sb.append((char) c);
-		//					}					
-		//				}
-		//			} catch (IOException e) {
-		//				s_logger.error("Cannot read port", e);
-		//			} finally {
-		//				try {
-		//					m_commIs.close();
-		//				} catch (IOException e) {
-		//					s_logger.error("Cannot close buffered reader", e);
-		//				}
-		//			}
-		//		}
+//		if (m_commIs != null) {
+//
+//			try {
+//				int c = -1;
+//				StringBuilder sb = new StringBuilder();
+//
+//				while (m_commIs != null) {
+//
+//					if (m_commIs.available() != 0) {
+//						c = m_commIs.read();
+//					} else {
+//						try {
+//							Thread.sleep(100);
+//							continue;
+//						} catch (InterruptedException e) {
+//							return;
+//						}
+//					}
+//
+//					if (echo && m_commOs != null) {
+//						m_commOs.write((char) c);
+//					}
+//
+//					// on reception of CR, publish the received sentence
+//					if (c==13) {
+//
+//						// Allocate a new payload
+//						KuraPayload payload = new KuraPayload();
+//
+//						// Timestamp the message
+//						payload.setTimestamp(new Date());
+//
+//						payload.addMetric("line", sb.toString());
+//
+//						// Publish the message
+//						try {
+//							m_cloudClient.publish(topic, payload, qos, retain);
+//							s_logger.info("Published to {} message: {}", topic, payload);
+//						} 
+//						catch (Exception e) {
+//							s_logger.error("Cannot publish topic: "+topic, e);
+//						}
+//
+//						sb = new StringBuilder();
+//
+//					} else if (c!=10) {
+//						sb.append((char) c);
+//					}					
+//				}
+//			} catch (IOException e) {
+//				s_logger.error("Cannot read port", e);
+//			} finally {
+//				try {
+//					m_commIs.close();
+//				} catch (IOException e) {
+//					s_logger.error("Cannot close buffered reader", e);
+//				}
+//			}
+//		}
 	}
 }
