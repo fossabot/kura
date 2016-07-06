@@ -17,6 +17,8 @@ import org.eclipse.kura.message.KuraPayload;
 import org.eclipse.kura.protocol.inemo.comm.INemoConnectionService;
 import org.eclipse.kura.protocol.inemo.comm.INemoConnectionServiceImpl;
 import org.eclipse.kura.protocol.inemo.comm.SerialInterfaceParameters;
+import org.eclipse.kura.protocol.inemo.message.INemoMessage;
+import org.eclipse.kura.protocol.inemo.message.PingMessage;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.ComponentException;
 import org.osgi.service.io.ConnectionFactory;
@@ -94,7 +96,7 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 	// ----------------------------------------------------------------
 
 	protected void activate(ComponentContext componentContext, Map<String,Object> properties) {
-		s_logger.info("Activating SECSOC test...");
+		s_logger.info("Activating iNemo test...");
 
 		m_properties = new HashMap<String, Object>();
 
@@ -245,17 +247,23 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 					boolean exec= true;
 					while (exec) {
 						doSerial();
-						exec= false;
+						try {
+							Thread.sleep(10000);
+						} catch (InterruptedException e) {
+							exec = false;
+						}
 					}
 				}
 			});
+			
+			final INemoTest callbackHandler= this;
 			m_listenerHandle = m_listenerWorker.submit(new Runnable() {		
 				@Override
 				public void run() {
 					boolean exec= true;
 					while (exec) {
 						try {
-							m_connService.receiveMessage();
+							m_connService.receiveMessage(callbackHandler);
 						} catch (KuraException e) {
 							s_logger.warn("Exception!!!!!!!");
 						} catch (IOException e) {
@@ -328,15 +336,15 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 
 	private void doSerial() {				
 		// fetch the publishing configuration from the publishing properties
-		String  topic  = (String) m_properties.get(PUBLISH_TOPIC_PROP_NAME);
-		Integer qos    = (Integer) m_properties.get(PUBLISH_QOS_PROP_NAME);
-		Boolean retain = (Boolean) m_properties.get(PUBLISH_RETAIN_PROP_NAME);
-
-		Boolean echo = (Boolean) m_properties.get(SERIAL_ECHO_PROP_NAME);
+//		String  topic  = (String) m_properties.get(PUBLISH_TOPIC_PROP_NAME);
+//		Integer qos    = (Integer) m_properties.get(PUBLISH_QOS_PROP_NAME);
+//		Boolean retain = (Boolean) m_properties.get(PUBLISH_RETAIN_PROP_NAME);
+//
+//		Boolean echo = (Boolean) m_properties.get(SERIAL_ECHO_PROP_NAME);
 		
-		int header= 0x76 & 0xFF;
-		int length= 0x01 & 0xFF;
-		int payload= 0x00 & 0xFF;
+		int header= 0x76;
+		int length= 0x01;
+		int payload= 0x00;
 		int checksum= (header + length + payload) & 0xFF;
 		
 		byte bMessage[] = new byte[4];
@@ -354,65 +362,12 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-//		if (m_commIs != null) {
-//
-//			try {
-//				int c = -1;
-//				StringBuilder sb = new StringBuilder();
-//
-//				while (m_commIs != null) {
-//
-//					if (m_commIs.available() != 0) {
-//						c = m_commIs.read();
-//					} else {
-//						try {
-//							Thread.sleep(100);
-//							continue;
-//						} catch (InterruptedException e) {
-//							return;
-//						}
-//					}
-//
-//					if (echo && m_commOs != null) {
-//						m_commOs.write((char) c);
-//					}
-//
-//					// on reception of CR, publish the received sentence
-//					if (c==13) {
-//
-//						// Allocate a new payload
-//						KuraPayload payload = new KuraPayload();
-//
-//						// Timestamp the message
-//						payload.setTimestamp(new Date());
-//
-//						payload.addMetric("line", sb.toString());
-//
-//						// Publish the message
-//						try {
-//							m_cloudClient.publish(topic, payload, qos, retain);
-//							s_logger.info("Published to {} message: {}", topic, payload);
-//						} 
-//						catch (Exception e) {
-//							s_logger.error("Cannot publish topic: "+topic, e);
-//						}
-//
-//						sb = new StringBuilder();
-//
-//					} else if (c!=10) {
-//						sb.append((char) c);
-//					}					
-//				}
-//			} catch (IOException e) {
-//				s_logger.error("Cannot read port", e);
-//			} finally {
-//				try {
-//					m_commIs.close();
-//				} catch (IOException e) {
-//					s_logger.error("Cannot close buffered reader", e);
-//				}
-//			}
-//		}
+	}
+	
+	public void messageCallback(INemoMessage message) {
+		if (message instanceof PingMessage) {
+			PingMessage pingMessage= (PingMessage) message;
+			s_logger.info("Received: {}", pingMessage.getStatus());
+		}
 	}
 }

@@ -8,7 +8,9 @@ import java.util.Vector;
 import org.eclipse.kura.KuraException;
 import org.eclipse.kura.comm.CommConnection;
 import org.eclipse.kura.comm.CommURI;
+import org.eclipse.kura.protocol.inemo.INemoTest;
 import org.eclipse.kura.protocol.inemo.message.INemoMessage;
+import org.eclipse.kura.protocol.inemo.message.PingMessage;
 import org.osgi.service.io.ConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,11 +63,11 @@ public class INemoConnectionServiceImpl implements INemoConnectionService{
 	}
 
 	@Override
-	public INemoMessage receiveMessage() throws KuraException, IOException {
+	public void receiveMessage(INemoTest callback) throws KuraException, IOException {
 		boolean echo= false;
-		
+
 		if (m_iStream != null) {
-			
+
 
 			int c = -1;
 			Vector<Integer> sb= new Vector<Integer>();
@@ -79,10 +81,10 @@ public class INemoConnectionServiceImpl implements INemoConnectionService{
 						Thread.sleep(100);
 						continue;
 					} catch (InterruptedException e) {
-						return null;
+						return;
 					}
 				}
-				
+
 				if (echo && m_oStream != null) {
 					m_oStream.write((char) c);
 				}
@@ -93,30 +95,46 @@ public class INemoConnectionServiceImpl implements INemoConnectionService{
 				} else {
 					sb.addElement(c);
 				}
-				
+
 				if (sb.size() > 2) {
 					int size= sb.elementAt(1);
 					if (sb.size()-3 == size) {
 						//parse body
-						s_logger.info("Received: {}", sb.toString());
+						int messageID = sb.elementAt(2);
+						int[] messageBody = new int[size - 1];
+						int messageBodyIndex= 0;
+						for (int i= 3; i < sb.size() - 3 ; i++) {
+							messageBody[messageBodyIndex]= sb.elementAt(i);
+							messageBodyIndex++;
+							
+						}
+						INemoMessage message= null;
+						switch (messageID) {
+							case 0x00:  message= new PingMessage();
+										message.setLenght(size);
+										message.setData(messageBody);
+										break;
+							default: 	break;
+						}
+						callback.messageCallback(message);
 					}
 				}
-				
-//				if (true) { //ended message
-//
-//					INemoMessage ssm= new INemoMessage(null); //messageData
-//
-//					ssm.parseHeader();
-//					ssm.parseBody();
-//
-//					sb = new StringBuilder();
-//
-//				} else if (c!=10) {
-//					sb.append((byte) c);
-//				}					
+
+				//				if (true) { //ended message
+				//
+				//					INemoMessage ssm= new INemoMessage(null); //messageData
+				//
+				//					ssm.parseHeader();
+				//					ssm.parseBody();
+				//
+				//					sb = new StringBuilder();
+				//
+				//				} else if (c!=10) {
+				//					sb.append((byte) c);
+				//				}					
 			}
 		} 
 
-		return null;
+		return;
 	}
 }
