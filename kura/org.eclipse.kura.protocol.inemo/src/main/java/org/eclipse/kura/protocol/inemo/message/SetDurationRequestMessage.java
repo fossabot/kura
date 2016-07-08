@@ -7,8 +7,8 @@ public class SetDurationRequestMessage extends SetDurationMessage{
 		this.setLenght(0x03);
 		int[] data= new int[3];
 		data[0]= super.messageId;
-		data[1]= 0x00;
-		data[2]= 0x06;
+		data[1]= 0x06;
+		data[2]= 0x00;
 		this.setData(data);
 	}
 }

@@ -3,6 +3,8 @@ package org.eclipse.kura.protocol.inemo;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -17,8 +19,25 @@ import org.eclipse.kura.message.KuraPayload;
 import org.eclipse.kura.protocol.inemo.comm.INemoConnectionService;
 import org.eclipse.kura.protocol.inemo.comm.INemoConnectionServiceImpl;
 import org.eclipse.kura.protocol.inemo.comm.SerialInterfaceParameters;
+import org.eclipse.kura.protocol.inemo.message.GetDurationMessage;
+import org.eclipse.kura.protocol.inemo.message.GetDurationRequestMessage;
+import org.eclipse.kura.protocol.inemo.message.GetEventInfoMessage;
+import org.eclipse.kura.protocol.inemo.message.GetEventInfoRequestMessage;
+import org.eclipse.kura.protocol.inemo.message.GetSnapshotMessage;
+import org.eclipse.kura.protocol.inemo.message.GetSnapshotRequestMessage;
+import org.eclipse.kura.protocol.inemo.message.GetThresholdMessage;
+import org.eclipse.kura.protocol.inemo.message.GetThresholdRequestMessage;
 import org.eclipse.kura.protocol.inemo.message.INemoMessage;
 import org.eclipse.kura.protocol.inemo.message.PingMessage;
+import org.eclipse.kura.protocol.inemo.message.PingRequestMessage;
+import org.eclipse.kura.protocol.inemo.message.SetDurationMessage;
+import org.eclipse.kura.protocol.inemo.message.SetDurationRequestMessage;
+import org.eclipse.kura.protocol.inemo.message.SetThresholdMessage;
+import org.eclipse.kura.protocol.inemo.message.SetThresholdRequestMessage;
+import org.eclipse.kura.protocol.inemo.message.SyncPollingMessage;
+import org.eclipse.kura.protocol.inemo.message.SyncPollingRequestMessage;
+import org.eclipse.kura.protocol.inemo.message.TakeSnapshotMessage;
+import org.eclipse.kura.protocol.inemo.message.TakeSnapshotRequestMessage;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.ComponentException;
 import org.osgi.service.io.ConnectionFactory;
@@ -60,6 +79,8 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 	private Future<?>           m_listenerHandle;
 
 	private Map<String, Object> m_properties;
+
+	private int m_lastEventIndex = -1;
 
 	// ----------------------------------------------------------------
 	//
@@ -244,31 +265,19 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 			m_writerHandle = m_writerWorker.submit(new Runnable() {		
 				@Override
 				public void run() {
-					boolean exec= true;
-					while (exec) {
-						doSerial();
-						try {
-							Thread.sleep(10000);
-						} catch (InterruptedException e) {
-							exec = false;
+					try {
+						doCalibration();
+						
+						while (true) {
+							doEventPoll();
+							Thread.sleep(1000);
 						}
-					}
-				}
-			});
-			
-			final INemoTest callbackHandler= this;
-			m_listenerHandle = m_listenerWorker.submit(new Runnable() {		
-				@Override
-				public void run() {
-					boolean exec= true;
-					while (exec) {
-						try {
-							m_connService.receiveMessage(callbackHandler);
-						} catch (KuraException e) {
-							s_logger.warn("Exception!!!!!!!");
-						} catch (IOException e) {
-							s_logger.warn("Exception!!!!!!!");
-						}
+					} catch (KuraException e) {
+						// TODO Auto-generated catch block
+						s_logger.warn("Exception while performing calibration: ", e);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
 				}
 			});
@@ -334,27 +343,60 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 		cleanupPort();
 	}
 
-	private void doSerial() {				
-		// fetch the publishing configuration from the publishing properties
-//		String  topic  = (String) m_properties.get(PUBLISH_TOPIC_PROP_NAME);
-//		Integer qos    = (Integer) m_properties.get(PUBLISH_QOS_PROP_NAME);
-//		Boolean retain = (Boolean) m_properties.get(PUBLISH_RETAIN_PROP_NAME);
-//
-//		Boolean echo = (Boolean) m_properties.get(SERIAL_ECHO_PROP_NAME);
+	private void doCalibration() throws KuraException {				
+		s_logger.debug("Before ping...");
+		PingRequestMessage pingRequestMessage= new PingRequestMessage();
+		sendMessage(pingRequestMessage);
+		receiveMessage();
+		s_logger.debug("After ping.");
 		
-		int header= 0x76;
-		int length= 0x01;
-		int payload= 0x00;
-		int checksum= (header + length + payload) & 0xFF;
-		
-		byte bMessage[] = new byte[4];
-		bMessage[0]= (byte) header;
-		bMessage[1]= (byte) length;
-		bMessage[2]= (byte) payload;
-		bMessage[3]= (byte) checksum;
+		s_logger.debug("Before takeSnapshotRequestMessage...");
+		TakeSnapshotRequestMessage takeSnapshotRequestMessage= new TakeSnapshotRequestMessage();
+		sendMessage(takeSnapshotRequestMessage);
+		receiveMessage();
+		s_logger.debug("After takeSnapshotRequestMessage.");
 		
 		try {
-			m_connService.sendMessage(bMessage);
+			Thread.sleep(4000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		s_logger.debug("Before getSnapshotRequestMessage...");
+		GetSnapshotRequestMessage getSnapshotRequestMessage= new GetSnapshotRequestMessage();
+		sendMessage(getSnapshotRequestMessage);
+		receiveMessage();
+		s_logger.debug("After getSnapshotRequestMessage.");
+		
+		s_logger.debug("Before setThresholdRequestMessage...");
+		SetThresholdRequestMessage setThresholdRequestMessage= new SetThresholdRequestMessage();
+		sendMessage(setThresholdRequestMessage);
+		receiveMessage();
+		s_logger.debug("After setThresholdRequestMessage.");
+		
+		s_logger.debug("Before getThresholdRequestMessage...");
+		GetThresholdRequestMessage getThresholdRequestMessage= new GetThresholdRequestMessage();
+		sendMessage(getThresholdRequestMessage);
+		receiveMessage();
+		s_logger.debug("After getThresholdRequestMessage.");
+		
+		s_logger.debug("Before setDurationRequestMessage...");
+		SetDurationRequestMessage setDurationRequestMessage= new SetDurationRequestMessage();
+		sendMessage(setDurationRequestMessage);
+		receiveMessage();
+		s_logger.debug("After setDurationRequestMessage.");
+		
+		s_logger.debug("Before getDurationRequestMessage...");
+		GetDurationRequestMessage getDurationRequestMessage= new GetDurationRequestMessage();
+		sendMessage(getDurationRequestMessage);
+		receiveMessage();
+		s_logger.debug("After getDurationRequestMessage.");
+	}
+
+	private void sendMessage(INemoMessage iNemoMessage) {
+		try {
+			m_connService.sendMessage(iNemoMessage.getMessageAsByteArray());
 		} catch (KuraException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -363,11 +405,98 @@ public class INemoTest implements ConfigurableComponent, CloudClientListener {
 			e.printStackTrace();
 		}
 	}
-	
-	public void messageCallback(INemoMessage message) {
+
+	private void receiveMessage() throws KuraException {
+		Callable<INemoMessage> callable = new Callable<INemoMessage>() {
+	        @Override
+	        public INemoMessage call() {
+	            try {
+					return m_connService.receiveMessage();
+				} catch (KuraException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				return null;
+	        }
+	    };
+		m_listenerHandle = m_listenerWorker.submit(callable);
+		try {
+			INemoMessage result= (INemoMessage) m_listenerHandle.get();
+			messageCallback(result);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void messageCallback(INemoMessage message) throws KuraException {
 		if (message instanceof PingMessage) {
 			PingMessage pingMessage= (PingMessage) message;
-			s_logger.info("Received: {}", pingMessage.getStatus());
+			s_logger.info("Received ping: {}", pingMessage.getStatus());
+		} else if (message instanceof TakeSnapshotMessage) {
+			TakeSnapshotMessage tempMessage = (TakeSnapshotMessage) message;
+			s_logger.info("Received takeSnapshotMessage response: {}", tempMessage.getStatus());
+		} else if (message instanceof GetSnapshotMessage) {
+			GetSnapshotMessage tempMessage = (GetSnapshotMessage) message;
+			s_logger.info("Received GetSnapshotRequestMessage response: {}", tempMessage.getStatus());
+		} else if (message instanceof SetThresholdMessage) {
+			SetThresholdMessage tempMessage = (SetThresholdMessage) message;
+			s_logger.info("Received SetThresholdRequestMessage response: {}", tempMessage.getStatus());
+		} else if (message instanceof GetThresholdMessage) {
+			GetThresholdMessage tempMessage = (GetThresholdMessage) message;
+			s_logger.info("Received GetThresholdRequestMessage response: {}", tempMessage.getStatus());
+		} else if (message instanceof SetDurationMessage) {
+			SetDurationMessage tempMessage = (SetDurationMessage) message;
+			s_logger.info("Received SetDurationRequestMessage response: {}", tempMessage.getStatus());
+		} else if (message instanceof GetDurationMessage) {
+			GetDurationMessage tempMessage = (GetDurationMessage) message;
+			s_logger.info("Received GetDurationRequestMessage response: {}", tempMessage.getStatus());
+		} else if (message instanceof SyncPollingMessage) {
+			SyncPollingMessage tempMessage = (SyncPollingMessage) message;
+			s_logger.info("Received SyncPollingMessage response: {}", tempMessage.getStatus());
+			if (m_lastEventIndex == -1) {
+				m_lastEventIndex = tempMessage.getEventIndex();
+			} else if (m_lastEventIndex != tempMessage.getEventIndex()) {
+				m_lastEventIndex= tempMessage.getEventIndex();
+				crashDetected();
+			}
+		} else if (message instanceof GetEventInfoMessage) {
+			GetEventInfoMessage tempMessage = (GetEventInfoMessage) message;
+			s_logger.info("Received GetEventInfoMessage response: {}", tempMessage.getStatus());
+			
+			s_logger.info("Received GetEventInfoMessage threshold: {}", tempMessage.getThreshold());
+			s_logger.info("Received GetEventInfoMessage xmax: {}", tempMessage.getXMax());
+			s_logger.info("Received GetEventInfoMessage ymax: {}", tempMessage.getYMax());
+			s_logger.info("Received GetEventInfoMessage zmax: {}", tempMessage.getZMax());
+			s_logger.info("Received GetEventInfoMessage xave: {}", tempMessage.getXAve());
+			s_logger.info("Received GetEventInfoMessage yave: {}", tempMessage.getYAve());
+			s_logger.info("Received GetEventInfoMessage zave: {}", tempMessage.getZAve());
+			s_logger.info("Received GetEventInfoMessage range: {}", tempMessage.getRange());
+			s_logger.info("Received GetEventInfoMessage xsnap: {}", tempMessage.getXSnap());
+			s_logger.info("Received GetEventInfoMessage ysnap: {}", tempMessage.getYSnap());
+			s_logger.info("Received GetEventInfoMessage zsnap: {}", tempMessage.getZSnap());
+			s_logger.info("Received GetEventInfoMessage phi: {}", tempMessage.getPhi());
+			s_logger.info("Received GetEventInfoMessage psi: {}", tempMessage.getPsi());
+			
 		}
+	}
+
+	private void doEventPoll() throws KuraException {
+		SyncPollingRequestMessage syncPollingRequestMessage= new SyncPollingRequestMessage();
+		sendMessage(syncPollingRequestMessage);
+		receiveMessage();
+	}
+	
+	private void crashDetected() throws KuraException { //to check the thread that executes this
+		s_logger.info("Crash detected!");
+		GetEventInfoRequestMessage getEventInfoRequestMessage= new GetEventInfoRequestMessage(m_lastEventIndex);
+		sendMessage(getEventInfoRequestMessage);
+		receiveMessage();
 	}
 }

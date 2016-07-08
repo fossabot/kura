@@ -1,6 +1,6 @@
 package org.eclipse.kura.protocol.inemo.message;
 
-public class SyncPollingRequestMessage extends SetPollingMessage{
+public class SyncPollingRequestMessage extends SyncPollingMessage{
 
 	public SyncPollingRequestMessage() {
 		super();
