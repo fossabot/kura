@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.eclipse.kura.message.KuraPayload;
 import org.eclipse.kura.protocol.can.CanConnectionService;
 import org.eclipse.kura.protocol.can.CanMessage;
+import org.eclipse.kura.protocol.can.cs.data.MotoTronDataSnapshot;
 import org.eclipse.kura.protocol.can.cs.data.PrivateCSDataSnapshot;
 import org.eclipse.kura.protocol.can.cs.data.PublicCSDataSnapshot;
 import org.eclipse.kura.protocol.can.messages.CSMessage0x100;
@@ -24,6 +25,8 @@ import org.eclipse.kura.protocol.can.messages.CSMessage0x102;
 import org.eclipse.kura.protocol.can.messages.CSMessage0x300;
 import org.eclipse.kura.protocol.can.messages.CSMessage0x301;
 import org.eclipse.kura.protocol.can.messages.CSMessage0x302;
+import org.eclipse.kura.protocol.can.messages.CSMessage0x401;
+import org.eclipse.kura.protocol.can.messages.CSMessage0x402;
 import org.eclipse.kura.protocol.can.messages.GWMessage0x200;
 import org.eclipse.kura.protocol.can.messages.GWMessage0x201;
 import org.eclipse.kura.protocol.can.messages.GWMessage0x202;
@@ -74,6 +77,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
     private PublicCSDataSnapshot  publicCSReceivedData  = new PublicCSDataSnapshot();
     private PrivateCSDataSnapshot privateCSReceivedData = new PrivateCSDataSnapshot();
+    private MotoTronDataSnapshot  motoTronReceivedData  = new MotoTronDataSnapshot();
 
     private Thread publishThread;
     private int    publishRate;
@@ -214,6 +218,10 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
                 CSMessage0x301.parseCanMessage(cm, privateCSReceivedData);
             } else if (canId == 0x302) {
                 CSMessage0x302.parseCanMessage(cm, isBigEndian, privateCSReceivedData);
+            } else if (canId == 0x401) {
+                CSMessage0x401.parseCanMessage(cm, motoTronReceivedData);
+            } else if (canId == 0x402) {
+                CSMessage0x402.parseCanMessage(cm, motoTronReceivedData);
             }
         } else {
             s_logger.warn("receive=null");
@@ -442,7 +450,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
     private void doSend1Test() {
         try {
-            sendMessage1(ifName);
+            sendMessage0x200(ifName);
         } catch (Exception e) {
             s_logger.warn("CanConnection Crash!", e);
         }
@@ -450,7 +458,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
     private void doSend2Test() {
         try {
-            sendMessage2(ifName);
+            sendMessage0x201(ifName);
         } catch (Exception e) {
             s_logger.warn("CanConnection Crash!", e);
         }
@@ -458,13 +466,13 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
     private void doSend3Test() {
         try {
-            sendMessage3(ifName);
+            sendMessage0x202(ifName);
         } catch (Exception e) {
             s_logger.warn("CanConnection Crash!", e);
         }
     }
 
-    private void sendMessage1(String ifName) throws KuraException, IOException {
+    private void sendMessage0x200(String ifName) throws KuraException, IOException {
 
         if (canConnection == null) {
             return;
@@ -477,7 +485,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         s_logger.info("Message sent with id: " + id);
     }
 
-    private void sendMessage2(String ifName) throws KuraException, IOException {
+    private void sendMessage0x201(String ifName) throws KuraException, IOException {
 
         if (canConnection == null) {
             return;
@@ -490,7 +498,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         s_logger.info("Message sent with id: " + id);
     }
 
-    private void sendMessage3(String ifName) throws KuraException, IOException {
+    private void sendMessage0x202(String ifName) throws KuraException, IOException {
 
         if (canConnection == null) {
             return;
@@ -508,7 +516,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
      */
     private void doPublish() {
         // fetch the publishing configuration from the publishing properties
-        String topic = "csdata";
+        String topic = "privatecsdata";
         Integer qos = 0;
         Boolean retain = false;
 

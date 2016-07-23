@@ -10,6 +10,7 @@ public class BookingInfo {
     private static final String BOOKING_DATE_YEAR   = "booking.date.year";
     private static final String CURRENT_TIME_HOUR   = "current.time.hour";
     private static final String CURRENT_TIME_MINUTE = "current.time.minute";
+    
 
     private int bookingTimeHour;
     private int bookingTimeMinute;
@@ -18,6 +19,7 @@ public class BookingInfo {
     private int bookingDateYear;
     private int currentTimeHour;
     private int currentTimeMinute;
+
 
     public BookingInfo(Map<String, Object> properties) {
         bookingTimeHour = Integer.parseInt((String) properties.get(BOOKING_TIME_HOUR));

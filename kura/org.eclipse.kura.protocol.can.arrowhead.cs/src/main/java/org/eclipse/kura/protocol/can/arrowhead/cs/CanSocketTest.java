@@ -241,13 +241,13 @@ public class CanSocketTest implements ConfigurableComponent {
 
             int startRecharge = b[0] & 0x01; // start recharge [0,1]
             int isBooked = (b[0] & 0x02) >> 1; // Recharge is booked?
-                                               // [0-No;1-Yes]
+ // [0-No;1-Yes]
             int solarIrradiation = (b[0] & 0x0C) >> 2; // Next Day Solar
-                                                       // Radiation Level
-                                                       // [0-Low; 1-Medium;
-                                                       // 2-High]
+ // Radiation Level
+ // [0-Low; 1-Medium;
+ // 2-High]
             int csReset = (b[0] & 0x10) >> 4; // Charging station reset
-                                              // [0-No;1-Yes]
+ // [0-No;1-Yes]
 
             sb.append("start recharge: " + startRecharge + ", ");
             sb.append("Recharge is booked?: " + isBooked + ", ");
