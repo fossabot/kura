@@ -1,14 +1,15 @@
 package org.eclipse.kura.protocol.can.recharge;
 
-public class BookingInfo {
+import java.util.Map;
 
-    public static final String BOOKING_TIME_HOUR   = "booking.time.hour";
-    public static final String BOOKING_TIME_MINUTE = "booking.time.minute";
-    public static final String BOOKING_DATE_DAY    = "booking.date.day";
-    public static final String BOOKING_DATE_MONTH  = "booking.date.month";
-    public static final String BOOKING_DATE_YEAR   = "booking.date.year";
-    public static final String CURRENT_TIME_HOUR   = "current.time.hour";
-    public static final String CURRENT_TIME_MINUTE = "current.time.minute";
+public class BookingInfo {
+    private final static String BOOKING_TIME_HOUR   = "booking.time.hour";
+    private final static String BOOKING_TIME_MINUTE = "booking.time.minute";
+    private final static String BOOKING_DATE_DAY    = "booking.date.day";
+    private final static String BOOKING_DATE_MONTH  = "booking.date.month";
+    private final static String BOOKING_DATE_YEAR   = "booking.date.year";
+    private final static String CURRENT_TIME_HOUR   = "current.time.hour";
+    private final static String CURRENT_TIME_MINUTE = "current.time.minute";
 
     private int bookingTimeHour;
     private int bookingTimeMinute;
@@ -17,6 +18,16 @@ public class BookingInfo {
     private int bookingDateYear;
     private int currentTimeHour;
     private int currentTimeMinute;
+
+    public BookingInfo(Map<String, Object> properties) {
+        bookingTimeHour = Integer.parseInt((String) properties.get(BOOKING_TIME_HOUR));
+        bookingTimeMinute = Integer.parseInt((String) properties.get(BOOKING_TIME_MINUTE));
+        bookingDateDay = Integer.parseInt((String) properties.get(BOOKING_DATE_DAY));
+        bookingDateMonth = Integer.parseInt((String) properties.get(BOOKING_DATE_MONTH));
+        bookingDateYear = Integer.parseInt((String) properties.get(BOOKING_DATE_YEAR));
+        currentTimeHour = Integer.parseInt((String) properties.get(CURRENT_TIME_HOUR));
+        currentTimeMinute = Integer.parseInt((String) properties.get(CURRENT_TIME_MINUTE));
+    }
 
     public int getBookingTimeHour() {
         return bookingTimeHour;
@@ -73,5 +84,4 @@ public class BookingInfo {
     public void setCurrentTimeMinute(int currentTimeMinute) {
         this.currentTimeMinute = currentTimeMinute;
     }
-
 }

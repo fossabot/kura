@@ -4,6 +4,15 @@
          name="Can network test" 
          description="Can network example application.">
               
+        <AD id="publish.rate"  
+            name="publish.rate"
+            type="Integer"
+            cardinality="0" 
+            required="true"
+            default="2"
+            min="1" 
+            description="Default message publishing rate in seconds (min 1)."/>
+        
         <AD id="can.name"
             name="can.name"
             type="String"

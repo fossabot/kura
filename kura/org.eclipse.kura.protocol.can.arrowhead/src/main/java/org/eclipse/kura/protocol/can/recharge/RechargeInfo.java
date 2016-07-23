@@ -1,15 +1,24 @@
 package org.eclipse.kura.protocol.can.recharge;
 
+import java.util.Map;
+
 public class RechargeInfo {
-    public static final String START_RECHARGE     = "start.recharge";
-    public static final String RECHARGE_IS_BOOKED = "recharge.is.booked";
-    public static final String SOLAR_RADIATION    = "solar.level";
-    public static final String CS_RESET           = "cs.reset";
+    private final static String START_RECHARGE     = "start.recharge";
+    private final static String RECHARGE_IS_BOOKED = "recharge.is.booked";
+    private final static String SOLAR_RADIATION    = "solar.level";
+    private final static String CS_RESET           = "cs.reset";
 
     private int startRecharge;
     private int rechargeBooked;
     private int solarRadiationLevel;
     private int csReset;
+
+    public RechargeInfo(Map<String, Object> properties) {
+        startRecharge = Integer.parseInt((String) properties.get(START_RECHARGE));
+        rechargeBooked = Integer.parseInt((String) properties.get(RECHARGE_IS_BOOKED));
+        solarRadiationLevel = Integer.parseInt((String) properties.get(SOLAR_RADIATION));
+        csReset = Integer.parseInt((String) properties.get(CS_RESET));
+    }
 
     public int getStartRecharge() {
         return startRecharge;
@@ -42,5 +51,4 @@ public class RechargeInfo {
     public void setCsReset(int csReset) {
         this.csReset = csReset;
     }
-
 }
