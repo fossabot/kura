@@ -1,8 +1,8 @@
 package org.eclipse.kura.protocol.can.messages;
 
 import org.eclipse.kura.protocol.can.CanMessage;
-import org.eclipse.kura.protocol.can.arrowhead.CanSocketTest;
-import org.eclipse.kura.protocol.can.cs.data.CSDataSnapshot;
+import org.eclipse.kura.protocol.can.arrowhead.ArrowheadCanSocketImpl;
+import org.eclipse.kura.protocol.can.cs.data.PublicCSDataSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,13 +23,13 @@ import org.slf4j.LoggerFactory;
  * <li>Storage_Battery_SOC</li>
  *
  */
-public class CSMessage2 {
-    private static final Logger s_logger = LoggerFactory.getLogger(CanSocketTest.class);
+public class CSMessage0x101 {
+    private static final Logger s_logger = LoggerFactory.getLogger(ArrowheadCanSocketImpl.class);
 
-    private CSMessage2() {
+    private CSMessage0x101() {
     }
 
-    public static void parseCanMessage(CanMessage cm, CSDataSnapshot csReceivedData) {
+    public static void parseCanMessage(CanMessage cm, PublicCSDataSnapshot publicCSReceivedData) {
         byte[] b = cm.getData();
         if (b != null && b.length == 5) {
             StringBuilder sb = new StringBuilder("received : ");
@@ -64,15 +64,15 @@ public class CSMessage2 {
             sb.append(cm.getCanId());
             s_logger.debug(sb.toString());
 
-            csReceivedData.setRechargeAvail(rechargeAvailable);
-            csReceivedData.setRechargeInProgress(rechargeInProgress);
-            csReceivedData.setPVSystemActive(pvSystemActive);
-            csReceivedData.setAuxChargerActive(auxChargerActive);
-            csReceivedData.setStorageBatterySts(storageBatteryConcactorSts);
-            csReceivedData.setConverterContactorSts(converterConcactorSts);
-            csReceivedData.setIGBTTemp(igbtTemperature);
-            csReceivedData.setStorageBatteryTemp(storageBatteryTemperature);
-            csReceivedData.setStorageBatterySOC(storageBatterySOC);
+            publicCSReceivedData.setRechargeAvail(rechargeAvailable);
+            publicCSReceivedData.setRechargeInProgress(rechargeInProgress);
+            publicCSReceivedData.setPVSystemActive(pvSystemActive);
+            publicCSReceivedData.setAuxChargerActive(auxChargerActive);
+            publicCSReceivedData.setStorageBatterySts(storageBatteryConcactorSts);
+            publicCSReceivedData.setConverterContactorSts(converterConcactorSts);
+            publicCSReceivedData.setIGBTTemp(igbtTemperature);
+            publicCSReceivedData.setStorageBatteryTemp(storageBatteryTemperature);
+            publicCSReceivedData.setStorageBatterySOC(storageBatterySOC);
         }
     }
 

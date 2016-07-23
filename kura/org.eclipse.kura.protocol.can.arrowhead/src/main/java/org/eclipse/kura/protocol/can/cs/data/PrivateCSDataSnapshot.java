@@ -1,15 +1,15 @@
 package org.eclipse.kura.protocol.can.cs.data;
 
-public class CSDataSnapshot {
+public class PrivateCSDataSnapshot {
 
-    // Message 0x100
+    // Message 0x300
     private int powerOut;
     private int minutesToRecharge;
-    private int secondsToRecharge;
+    private int hoursToRecharge;
     private int energyOut;
     private int powerPV;
 
-    // Message 0x101
+    // Message 0x301
     private int rechargeAvailable;
     private int rechargeInProgress;
     private int pvSystemActive;
@@ -20,7 +20,7 @@ public class CSDataSnapshot {
     private int storageBatteryTemp;
     private int storageBatterySOC;
 
-    // Message 0x102
+    // Message 0x302
     private int vOut;
     private int storageBatteryV;
     private int pvSystemV;
@@ -28,10 +28,10 @@ public class CSDataSnapshot {
     private int storageBatteryI;
     private int index;
 
-    public CSDataSnapshot() {
+    public PrivateCSDataSnapshot() {
         powerOut = 0;
         minutesToRecharge = 0;
-        secondsToRecharge = 0;
+        hoursToRecharge = 0;
         energyOut = 0;
         powerPV = 0;
         rechargeAvailable = 0;
@@ -54,7 +54,7 @@ public class CSDataSnapshot {
     public void resetData() {
         powerOut = 0;
         minutesToRecharge = 0;
-        secondsToRecharge = 0;
+        hoursToRecharge = 0;
         energyOut = 0;
         powerPV = 0;
         rechargeAvailable = 0;
@@ -78,18 +78,18 @@ public class CSDataSnapshot {
         this.powerOut = Math.max(this.powerOut, powerOut);
     }
 
-    public void setTimeToRecharge(int minutes, int seconds) {
-        if (minutes < this.minutesToRecharge) {
+    public void setTimeToRecharge(int minutes, int hours) {
+        if (hours < this.hoursToRecharge) {
             return;
-        } else if (minutes == this.minutesToRecharge) {
-            if (seconds <= this.secondsToRecharge) {
+        } else if (hours == this.hoursToRecharge) {
+            if (minutes <= this.minutesToRecharge) {
                 return;
             } else {
-                this.secondsToRecharge = seconds;
+                this.minutesToRecharge = minutes;
             }
         } else {
             this.minutesToRecharge = minutes;
-            this.secondsToRecharge = seconds;
+            this.hoursToRecharge = hours;
         }
     }
 
@@ -166,7 +166,7 @@ public class CSDataSnapshot {
     }
 
     public int getSecondsToRecharge() {
-        return secondsToRecharge;
+        return hoursToRecharge;
     }
 
     public int getEnergyOut() {

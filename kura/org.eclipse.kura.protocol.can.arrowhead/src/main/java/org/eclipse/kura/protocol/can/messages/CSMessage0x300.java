@@ -1,8 +1,8 @@
 package org.eclipse.kura.protocol.can.messages;
 
 import org.eclipse.kura.protocol.can.CanMessage;
-import org.eclipse.kura.protocol.can.arrowhead.CanSocketTest;
-import org.eclipse.kura.protocol.can.cs.data.CSDataSnapshot;
+import org.eclipse.kura.protocol.can.arrowhead.ArrowheadCanSocketImpl;
+import org.eclipse.kura.protocol.can.cs.data.PrivateCSDataSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,13 +16,13 @@ import org.slf4j.LoggerFactory;
  * <li>Power_PV</li>
  *
  */
-public class CSMessage1 {
-    private static final Logger s_logger = LoggerFactory.getLogger(CanSocketTest.class);
+public class CSMessage0x300 {
+    private static final Logger s_logger = LoggerFactory.getLogger(ArrowheadCanSocketImpl.class);
 
-    private CSMessage1() {
+    private CSMessage0x300() {
     }
 
-    public static void parseCanMessage(CanMessage cm, boolean isBigEndian, CSDataSnapshot csReceivedData) {
+    public static void parseCanMessage(CanMessage cm, boolean isBigEndian, PrivateCSDataSnapshot privateCSReceivedData) {
         byte[] b = cm.getData();
         if (b != null && b.length == 8) {
             StringBuilder sb = new StringBuilder("received : ");
@@ -63,10 +63,10 @@ public class CSMessage1 {
             sb.append(cm.getCanId());
             s_logger.debug(sb.toString());
 
-            csReceivedData.setPowerOut(powerOut);
-            csReceivedData.setTimeToRecharge(minutesToRecharge, secondsToRecharge);
-            csReceivedData.setEnergy(energyOut);
-            csReceivedData.setPowerPV(powerPV);
+            privateCSReceivedData.setPowerOut(powerOut);
+            privateCSReceivedData.setTimeToRecharge(minutesToRecharge, secondsToRecharge);
+            privateCSReceivedData.setEnergy(energyOut);
+            privateCSReceivedData.setPowerPV(powerPV);
         }
     }
 

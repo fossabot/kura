@@ -3,10 +3,10 @@ package org.eclipse.kura.protocol.can.recharge;
 import java.util.Map;
 
 public class RechargeInfo {
-    private final static String START_RECHARGE     = "start.recharge";
-    private final static String RECHARGE_IS_BOOKED = "recharge.is.booked";
-    private final static String SOLAR_RADIATION    = "solar.level";
-    private final static String CS_RESET           = "cs.reset";
+    private static final String START_RECHARGE     = "start.recharge";
+    private static final String RECHARGE_IS_BOOKED = "recharge.is.booked";
+    private static final String SOLAR_RADIATION    = "solar.level";
+    private static final String CS_RESET           = "cs.reset";
 
     private int startRecharge;
     private int rechargeBooked;

@@ -3,9 +3,9 @@ package org.eclipse.kura.protocol.can.recharge;
 import java.util.Map;
 
 public class CurrentDateInfo {
-    private final static String CURRENT_DATE_DAY   = "current.date.day";
-    private final static String CURRENT_DATE_MONTH = "current.date.month";
-    private final static String CURRENT_DATE_YEAR  = "current.date.year";
+    private static final String CURRENT_DATE_DAY   = "current.date.day";
+    private static final String CURRENT_DATE_MONTH = "current.date.month";
+    private static final String CURRENT_DATE_YEAR  = "current.date.year";
 
     private int currentDateDay;
     private int currentDateMonth;

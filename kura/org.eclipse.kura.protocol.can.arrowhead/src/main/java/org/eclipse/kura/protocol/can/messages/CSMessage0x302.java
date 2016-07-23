@@ -1,8 +1,8 @@
 package org.eclipse.kura.protocol.can.messages;
 
 import org.eclipse.kura.protocol.can.CanMessage;
-import org.eclipse.kura.protocol.can.arrowhead.CanSocketTest;
-import org.eclipse.kura.protocol.can.cs.data.CSDataSnapshot;
+import org.eclipse.kura.protocol.can.arrowhead.ArrowheadCanSocketImpl;
+import org.eclipse.kura.protocol.can.cs.data.PrivateCSDataSnapshot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,13 +18,13 @@ import org.slf4j.LoggerFactory;
  * <li>Storage_Battery_I</li>
  *
  */
-public class CSMessage3 {
-    private static final Logger s_logger = LoggerFactory.getLogger(CanSocketTest.class);
+public class CSMessage0x302 {
+    private static final Logger s_logger = LoggerFactory.getLogger(ArrowheadCanSocketImpl.class);
 
-    private CSMessage3() {
+    private CSMessage0x302() {
     }
 
-    public static void parseCanMessage(CanMessage cm, boolean isBigEndian, CSDataSnapshot csReceivedData) {
+    public static void parseCanMessage(CanMessage cm, boolean isBigEndian, PrivateCSDataSnapshot privateCSReceivedData) {
         byte[] b = cm.getData();
         if (b != null && b.length == 8) {
             StringBuilder sb = new StringBuilder("received : ");
@@ -63,12 +63,12 @@ public class CSMessage3 {
             sb.append(cm.getCanId());
             s_logger.debug(sb.toString());
 
-            csReceivedData.setVOut(vOut);
-            csReceivedData.setStorageBatteryV(storageBatteryV);
-            csReceivedData.setPVSystemV(pvSystemV);
-            csReceivedData.setIOut(iOut);
-            csReceivedData.setStorageBatteryI(storageBatteryI);
-            csReceivedData.increaseIndex();
+            privateCSReceivedData.setVOut(vOut);
+            privateCSReceivedData.setStorageBatteryV(storageBatteryV);
+            privateCSReceivedData.setPVSystemV(pvSystemV);
+            privateCSReceivedData.setIOut(iOut);
+            privateCSReceivedData.setStorageBatteryI(storageBatteryI);
+            privateCSReceivedData.increaseIndex();
         }
     }
 

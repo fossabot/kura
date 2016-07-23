@@ -1,6 +1,6 @@
 package org.eclipse.kura.protocol.can.messages;
 
-import org.eclipse.kura.protocol.can.arrowhead.CanSocketTest;
+import org.eclipse.kura.protocol.can.arrowhead.ArrowheadCanSocketImpl;
 import org.eclipse.kura.protocol.can.recharge.CurrentDateInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,10 +11,10 @@ import org.slf4j.LoggerFactory;
  * <li>Current date</li>
  *
  */
-public class GWMessage3 {
-    private static final Logger s_logger = LoggerFactory.getLogger(CanSocketTest.class);
+public class GWMessage0x202 {
+    private static final Logger s_logger = LoggerFactory.getLogger(ArrowheadCanSocketImpl.class);
 
-    private GWMessage3() {
+    private GWMessage0x202() {
     }
 
     public static byte[] createMessage(int id, CurrentDateInfo currentDateInfo, boolean isBigEndian) {

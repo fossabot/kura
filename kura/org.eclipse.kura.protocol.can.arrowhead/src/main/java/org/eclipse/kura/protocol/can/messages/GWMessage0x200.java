@@ -1,6 +1,6 @@
 package org.eclipse.kura.protocol.can.messages;
 
-import org.eclipse.kura.protocol.can.arrowhead.CanSocketTest;
+import org.eclipse.kura.protocol.can.arrowhead.ArrowheadCanSocketImpl;
 import org.eclipse.kura.protocol.can.recharge.RechargeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +15,8 @@ import org.slf4j.LoggerFactory;
  * <li>Charging Station Reset</li>
  *
  */
-public class GWMessage1 {
-    private static final Logger s_logger = LoggerFactory.getLogger(CanSocketTest.class);
+public class GWMessage0x200 {
+    private static final Logger s_logger = LoggerFactory.getLogger(ArrowheadCanSocketImpl.class);
 
     public static byte[] createMessage(int id, RechargeInfo rechargeInfo) {
         StringBuilder sb = new StringBuilder("Trying to create can frame message 1 with value = ");

@@ -3,13 +3,13 @@ package org.eclipse.kura.protocol.can.recharge;
 import java.util.Map;
 
 public class BookingInfo {
-    private final static String BOOKING_TIME_HOUR   = "booking.time.hour";
-    private final static String BOOKING_TIME_MINUTE = "booking.time.minute";
-    private final static String BOOKING_DATE_DAY    = "booking.date.day";
-    private final static String BOOKING_DATE_MONTH  = "booking.date.month";
-    private final static String BOOKING_DATE_YEAR   = "booking.date.year";
-    private final static String CURRENT_TIME_HOUR   = "current.time.hour";
-    private final static String CURRENT_TIME_MINUTE = "current.time.minute";
+    private static final String BOOKING_TIME_HOUR   = "booking.time.hour";
+    private static final String BOOKING_TIME_MINUTE = "booking.time.minute";
+    private static final String BOOKING_DATE_DAY    = "booking.date.day";
+    private static final String BOOKING_DATE_MONTH  = "booking.date.month";
+    private static final String BOOKING_DATE_YEAR   = "booking.date.year";
+    private static final String CURRENT_TIME_HOUR   = "current.time.hour";
+    private static final String CURRENT_TIME_MINUTE = "current.time.minute";
 
     private int bookingTimeHour;
     private int bookingTimeMinute;
