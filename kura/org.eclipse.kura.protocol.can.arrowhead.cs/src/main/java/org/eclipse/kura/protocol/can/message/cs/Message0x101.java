@@ -1,17 +1,19 @@
-package org.eclipse.kura.protocol.can.cs;
+package org.eclipse.kura.protocol.can.message.cs;
 
-public class Message2 {
-    public static final String FAULT_FLAG                       = "fault.flag";
-    public static final String RECHARGE_AVAILABLE               = "recharge.available";
-    public static final String RECHARGE_IN_PROGRESS             = "recharge.in.progress";
-    public static final String PV_SYSTEM_ACTIVE                 = "pv.system.active";
-    public static final String AUX_CHARGER_ACTIVE               = "aux.charger.active";
-    public static final String STORAGE_BATTERY_CONTACTOR_STATUS = "storage.battery.contactor.status";
-    public static final String CONVERTER_CONTACTOR_STATUS       = "converter.contactor.status";
-    public static final String FAULT_STRING                     = "fault.string";
-    public static final String IGBT_TEMP                        = "igbt.temp";
-    public static final String STORAGE_TEMP                     = "storage.temp";
-    public static final String STORAGE_BATTERY_SOC              = "storage.battery.soc";
+import java.util.Map;
+
+public class Message0x101 {
+    private static final String FAULT_FLAG                       = "fault.flag";
+    private static final String RECHARGE_AVAILABLE               = "recharge.available";
+    private static final String RECHARGE_IN_PROGRESS             = "recharge.in.progress";
+    private static final String PV_SYSTEM_ACTIVE                 = "pv.system.active";
+    private static final String AUX_CHARGER_ACTIVE               = "aux.charger.active";
+    private static final String STORAGE_BATTERY_CONTACTOR_STATUS = "storage.battery.contactor.status";
+    private static final String CONVERTER_CONTACTOR_STATUS       = "converter.contactor.status";
+    private static final String FAULT_STRING                     = "fault.string";
+    private static final String IGBT_TEMP                        = "igbt.temp";
+    private static final String STORAGE_TEMP                     = "storage.temp";
+    private static final String STORAGE_BATTERY_SOC              = "storage.battery.soc";
 
     private int faultFlag;
     private int rechargeAvailable;
@@ -111,6 +113,21 @@ public class Message2 {
 
     public void setStorageBatterySoc(int storageBatterySoc) {
         this.storageBatterySoc = storageBatterySoc;
+    }
+    
+    
+    public void populateMessageInfo(Map<String, Object> properties) {
+        setFaultFlag(Integer.parseInt((String) properties.get(FAULT_FLAG)));
+        setRechargeAvailable(Integer.parseInt((String) properties.get(RECHARGE_AVAILABLE)));
+        setRechargeInProgress(Integer.parseInt((String) properties.get(RECHARGE_IN_PROGRESS)));
+        setPvSystemActive(Integer.parseInt((String) properties.get(PV_SYSTEM_ACTIVE)));
+        setAuxChargerActive(Integer.parseInt((String) properties.get(AUX_CHARGER_ACTIVE)));
+        setStorageBatteryContactorStatus(Integer.parseInt((String) properties.get(STORAGE_BATTERY_CONTACTOR_STATUS)));
+        setConverterContactorStatus(Integer.parseInt((String) properties.get(CONVERTER_CONTACTOR_STATUS)));
+        setFaultString(Integer.parseInt((String) properties.get(FAULT_STRING)));
+        setIgbtTemp(Integer.parseInt((String) properties.get(IGBT_TEMP)));
+        setStorageTemp(Integer.parseInt((String) properties.get(STORAGE_TEMP)));
+        setStorageBatterySoc(Integer.parseInt((String) properties.get(STORAGE_BATTERY_SOC)));
     }
 
 }

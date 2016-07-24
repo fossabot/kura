@@ -49,6 +49,16 @@
             min = "0"
             max = "59"
             description="ID 0x100: Time to recharge [s] [0-59]"/>
+            
+        <AD id="time.to.recharge.hours"
+            name="time.to.recharge.hours"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "59"
+            description="ID 0x300: Time to recharge [h] [0-59]"/>
         
         <AD id="energy.out"
             name="energy.out"
@@ -234,6 +244,138 @@
             max = "120"
             description="ID 0x102: Storage_Battery_I [A] [0-120]"/>
             
+            
+            
+        <AD id="local.booking.id"
+            name="local.booking.id"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "255"
+            description="ID 0x401: Local Booking ID [0-255]"/>
+            
+        <AD id="plate.char.1"  
+            name="plate.char.1"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.1. Min a. Max z."/>
+            
+         <AD id="plate.char.2"  
+            name="plate.char.2"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.2. Min a. Max z."/>
+         
+         <AD id="plate.char.3"  
+            name="plate.char.3"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.3. Min a. Max z."/>
+            
+         <AD id="plate.char.4"  
+            name="plate.char.4"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.4. Min a. Max z."/>
+         
+         <AD id="plate.char.5"  
+            name="plate.char.5"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.5. Min a. Max z."/>
+            
+        <AD id="plate.char.6"  
+            name="plate.char.6"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.6. Min a. Max z."/>
+            
+         <AD id="plate.char.7"  
+            name="plate.char.7"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.7. Min a. Max z."/>
+            
+         <AD id="plate.char.8"  
+            name="plate.char.8"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.8. Min a. Max z."/>
+            
+         <AD id="plate.char.9"  
+            name="plate.char.9"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.9. Min a. Max z."/>
+            
+         <AD id="plate.char.10"  
+            name="plate.char.10"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.10. Min a. Max z."/>
+            
+         <AD id="plate.char.11"  
+            name="plate.char.11"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.11. Min a. Max z."/>
+            
+         <AD id="plate.char.12"  
+            name="plate.char.12"
+            type="Char"
+            cardinality="0" 
+            required="true"
+            default="a" 
+            min = "a"
+            max = "z"
+            description="plate.char.12. Min a. Max z."/>
+              
     </OCD>
     <Designate pid="org.eclipse.kura.protocol.can.arrowhead.cs.CanSocketTest">
         <Object ocdref="org.eclipse.kura.protocol.can.arrowhead.cs.CanSocketTest"/>
