@@ -17,8 +17,14 @@ import org.slf4j.LoggerFactory;
  */
 public class GWMessage0x200 {
     private static final Logger s_logger = LoggerFactory.getLogger(ArrowheadCanSocketImpl.class);
+    
+    private static final int MESSAGE_ID = 0x200;
 
-    public static byte[] createMessage(int id, RechargeInfo rechargeInfo) {
+    public static int getId() {
+        return MESSAGE_ID;
+    }
+
+    public static byte[] createMessage(RechargeInfo rechargeInfo) {
         StringBuilder sb = new StringBuilder("Trying to create can frame message 1 with value = ");
         byte[] bMessage = new byte[1];
         int startRecharge = rechargeInfo.getStartRecharge(); // start recharge [0,1]
@@ -32,7 +38,7 @@ public class GWMessage0x200 {
         sb.append(" ");
 
         sb.append(" and id = ");
-        sb.append(id);
+        sb.append(MESSAGE_ID);
         s_logger.debug(sb.toString());
         return bMessage;
     }

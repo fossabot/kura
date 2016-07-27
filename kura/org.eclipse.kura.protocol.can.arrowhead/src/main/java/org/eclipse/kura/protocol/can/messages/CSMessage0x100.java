@@ -25,7 +25,7 @@ public class CSMessage0x100 {
     public static void parseCanMessage(CanMessage cm, boolean isBigEndian, PublicCSDataSnapshot publicCSReceivedData) {
         byte[] b = cm.getData();
         if (b != null && b.length == 8) {
-            StringBuilder sb = new StringBuilder("received : ");
+            StringBuilder sb = new StringBuilder("received 0x100: ");
 
             int powerOut;
             if (isBigEndian) {
@@ -54,11 +54,7 @@ public class CSMessage0x100 {
             sb.append("Seconds to recharge: " + secondsToRecharge + " seconds, ");
             sb.append("Energy out: " + energyOut + " Wh, ");
             sb.append("Power PV: " + powerPV + " W");
-
-            // for(int i=0; i<b.length; i++){
-            // sb.append(b[i]);
-            // sb.append(";");
-            // }
+            
             sb.append(" on id = ");
             sb.append(cm.getCanId());
             s_logger.debug(sb.toString());

@@ -25,7 +25,7 @@ public class CSMessage0x300 {
     public static void parseCanMessage(CanMessage cm, boolean isBigEndian, PrivateCSDataSnapshot privateCSReceivedData) {
         byte[] b = cm.getData();
         if (b != null && b.length == 8) {
-            StringBuilder sb = new StringBuilder("received : ");
+            StringBuilder sb = new StringBuilder("received 0x300: ");
 
             int powerOut;
             if (isBigEndian) {

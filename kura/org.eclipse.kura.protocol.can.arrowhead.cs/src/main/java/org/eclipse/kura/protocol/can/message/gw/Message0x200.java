@@ -10,7 +10,7 @@ public class Message0x200 {
     public static void parseGwCanMessage(CanMessage cm) {
         byte[] b = cm.getData();
         if (b != null && b.length == 1) {
-            StringBuilder sb = new StringBuilder("received : ");
+            StringBuilder sb = new StringBuilder("received 0x200: ");
 
             int startRecharge = b[0] & 0x01; // start recharge [0,1]
             int isBooked = (b[0] & 0x02) >> 1; // Recharge is booked?

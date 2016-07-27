@@ -30,6 +30,7 @@ import org.eclipse.kura.protocol.can.messages.CSMessage0x402;
 import org.eclipse.kura.protocol.can.messages.GWMessage0x200;
 import org.eclipse.kura.protocol.can.messages.GWMessage0x201;
 import org.eclipse.kura.protocol.can.messages.GWMessage0x202;
+import org.eclipse.kura.protocol.can.messages.GWMessage0x400;
 import org.eclipse.kura.protocol.can.recharge.BookingInfo;
 import org.eclipse.kura.protocol.can.recharge.CurrentDateInfo;
 import org.eclipse.kura.protocol.can.recharge.RechargeInfo;
@@ -49,6 +50,10 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private static final String ID_201_FREQUENCY = "can.id201.message.frequency";
     private static final String ID_202_FREQUENCY = "can.id202.message.frequency";
     private static final String IS_BIG_ENDIAN    = "can.bigendian";
+    private static final String MODALITY         = "arrowhead.modality";
+    private static final String MODALITY_T311    = "t3.1.1";
+    private static final String MODALITY_T312    = "t3.1.2";
+    private static final String MODALITY_T32     = "t3.2";
 
     private static final String PUBLISH_RATE_PROP_NAME = "publish.rate";
 
@@ -59,6 +64,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private Thread               sendThread2;
     private Thread               sendThread3;
     private String               ifName;
+    private String               chosenModality;
 
     private CloudService cloudService;
     private CloudClient  cloudClient;
@@ -114,12 +120,14 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
                 ifName = (String) classProperties.get("can.name");
             }
 
+            chosenModality = (String) classProperties.get(MODALITY);
+
             rechargeInfo = new RechargeInfo(classProperties);
             bookingInfo = new BookingInfo(classProperties);
             currentDateInfo = new CurrentDateInfo(classProperties);
             getDelays();
             isBigEndian = (Boolean) classProperties.get(IS_BIG_ENDIAN);
-            publishRate = (Integer) classProperties.get(PUBLISH_RATE_PROP_NAME);
+            publishRate = ((Integer) classProperties.get(PUBLISH_RATE_PROP_NAME)) * 1000;
         }
 
         // get the mqtt client for this application
@@ -141,29 +149,11 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     }
 
     public void deactivate(ComponentContext componentContext) {
-        if (listenThread != null) {
-            listenThread.interrupt();
-            try {
-                listenThread.join(100);
-                receiverRunning = false;
-            } catch (InterruptedException e) {
-                // Ignore
-            }
-        }
-        listenThread = null;
+        stopListenThread();
 
         stopSendThreads();
 
-        // shutting down the worker and cleaning up the properties
-        if (publishThread != null) {
-            listenThread.interrupt();
-            try {
-                publishThread.join(100);
-            } catch (InterruptedException e) {
-                // Ignore
-            }
-        }
-        publishThread = null;
+        stopPublishThread();
 
         // Releasing the CloudApplicationClient
         s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
@@ -175,20 +165,31 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
         classProperties = properties;
         if (classProperties != null) {
-            if (classProperties.get("can.name") != null)
+            if (classProperties.get("can.name") != null) {
                 ifName = (String) classProperties.get("can.name");
+            }
+
+            chosenModality = (String) classProperties.get(MODALITY);
+
             rechargeInfo = new RechargeInfo(classProperties);
             bookingInfo = new BookingInfo(classProperties);
             currentDateInfo = new CurrentDateInfo(classProperties);
 
             getDelays();
             isBigEndian = (Boolean) classProperties.get(IS_BIG_ENDIAN);
+            publishRate = ((Integer) classProperties.get(PUBLISH_RATE_PROP_NAME)) * 1000;
         }
 
-        stopSendThreads();
-        senderRunning = true;
-        startSendThreads();
+        stopListenThread();
 
+        stopSendThreads();
+
+        stopPublishThread();
+        senderRunning = true;
+
+        startListeningThread();
+        startSendThreads();
+        startPublishThread();
     }
 
     private void doReceive() {
@@ -281,6 +282,10 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     }
 
     private void startSendThreads() {
+        if (MODALITY_T311.equals(chosenModality)) {
+            return;
+        }
+        
         if (sendThread1 != null) {
             sendThread1.interrupt();
             try {
@@ -388,6 +393,32 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         publishThread.start();
     }
 
+    private void stopPublishThread() {
+        // shutting down the worker and cleaning up the properties
+        if (publishThread != null) {
+            publishThread.interrupt();
+            try {
+                publishThread.join(100);
+            } catch (InterruptedException e) {
+                // Ignore
+            }
+        }
+        publishThread = null;
+    }
+
+    private void stopListenThread() {
+        if (listenThread != null) {
+            listenThread.interrupt();
+            try {
+                listenThread.join(100);
+                receiverRunning = false;
+            } catch (InterruptedException e) {
+                // Ignore
+            }
+        }
+        listenThread = null;
+    }
+
     private void startListeningThread() {
         if (listenThread != null) {
             listenThread.interrupt();
@@ -404,6 +435,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             @Override
             public void run() {
                 if (canConnection != null) {
+                    receiverRunning = true;
                     while (receiverRunning) {
                         doReceive();
                     }
@@ -450,7 +482,13 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
     private void doSend1Test() {
         try {
-            sendMessage0x200(ifName);
+            if (MODALITY_T312.equals(chosenModality)) {
+                sendMessage0x200();
+            }
+
+            if (motoTronReceivedData.getVehiclePlate() != null) {
+                sendMessage0x400();
+            }
         } catch (Exception e) {
             s_logger.warn("CanConnection Crash!", e);
         }
@@ -458,7 +496,9 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
     private void doSend2Test() {
         try {
-            sendMessage0x201(ifName);
+            if (MODALITY_T312.equals(chosenModality) || MODALITY_T32.equals(chosenModality)) {
+                sendMessage0x201();
+            }
         } catch (Exception e) {
             s_logger.warn("CanConnection Crash!", e);
         }
@@ -466,97 +506,146 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
     private void doSend3Test() {
         try {
-            sendMessage0x202(ifName);
+            if (MODALITY_T312.equals(chosenModality) || MODALITY_T32.equals(chosenModality)) {
+                sendMessage0x202();
+            }
         } catch (Exception e) {
             s_logger.warn("CanConnection Crash!", e);
         }
     }
 
-    private void sendMessage0x200(String ifName) throws KuraException, IOException {
+    private void sendMessage0x200() throws KuraException, IOException {
 
         if (canConnection == null) {
             return;
         }
-        int id = 0x200;
 
-        byte[] bMessage = GWMessage0x200.createMessage(id, rechargeInfo);
+        byte[] bMessage = GWMessage0x200.createMessage(rechargeInfo);
 
-        canConnection.sendCanMessage(ifName, id, bMessage);
-        s_logger.info("Message sent with id: " + id);
+        canConnection.sendCanMessage(ifName, GWMessage0x200.getId(), bMessage);
+        s_logger.info("Message sent with id: " + GWMessage0x200.getId());
     }
 
-    private void sendMessage0x201(String ifName) throws KuraException, IOException {
+    private void sendMessage0x201() throws KuraException, IOException {
 
         if (canConnection == null) {
             return;
         }
-        int id = 0x201;
 
-        byte[] bMessage = GWMessage0x201.createMessage(id, bookingInfo, isBigEndian);
+        byte[] bMessage = GWMessage0x201.createMessage(bookingInfo, isBigEndian);
 
-        canConnection.sendCanMessage(ifName, id, bMessage);
-        s_logger.info("Message sent with id: " + id);
+        canConnection.sendCanMessage(ifName, GWMessage0x201.getId(), bMessage);
+        s_logger.info("Message sent with id: " + GWMessage0x201.getId());
     }
 
-    private void sendMessage0x202(String ifName) throws KuraException, IOException {
+    private void sendMessage0x202() throws KuraException, IOException {
 
         if (canConnection == null) {
             return;
         }
-        int id = 0x202;
 
-        byte[] bMessage = GWMessage0x202.createMessage(id, currentDateInfo, isBigEndian);
+        byte[] bMessage = GWMessage0x202.createMessage(currentDateInfo, isBigEndian);
 
-        canConnection.sendCanMessage(ifName, id, bMessage);
-        s_logger.info("Message sent with id: " + id);
+        canConnection.sendCanMessage(ifName, GWMessage0x202.getId(), bMessage);
+        s_logger.info("Message sent with id: " + GWMessage0x202.getId());
+    }
+
+    private void sendMessage0x400() throws KuraException, IOException {
+        if (canConnection == null) {
+            return;
+        }
+
+        byte[] bMessage = GWMessage0x400.createMessage(motoTronReceivedData);
+
+        canConnection.sendCanMessage(ifName, GWMessage0x400.getId(), bMessage);
+        s_logger.info("Message sent with id: " + GWMessage0x400.getId());
     }
 
     /**
      * Called at the configured rate to publish the next aggregated measurement.
      */
     private void doPublish() {
-        // fetch the publishing configuration from the publishing properties
-        String topic = "privatecsdata";
+        String topic = null;
         Integer qos = 0;
         Boolean retain = false;
-
-        // Allocate a new payload
         KuraPayload payload = new KuraPayload();
 
-        // Timestamp the message
-        payload.setTimestamp(new Date());
+        if (MODALITY_T312.equals(chosenModality)) {
+            // fetch the publishing configuration from the publishing properties
+            topic = "publiccsdata";
+            qos = 0;
+            retain = false;
 
-        // Add all the needed data to the payload
-        payload.addMetric("Power_Out", privateCSReceivedData.getPowerOut());
-        payload.addMetric("Minutes_to_Recharge_Estimated", privateCSReceivedData.getMinutesToRecharge());
-        payload.addMetric("Seconds_to_Recharge_Estimated", privateCSReceivedData.getSecondsToRecharge());
-        payload.addMetric("Energy_Out", privateCSReceivedData.getEnergyOut());
-        payload.addMetric("Power_PV", privateCSReceivedData.getPowerPV());
+            // Timestamp the message
+            payload.setTimestamp(new Date());
 
-        payload.addMetric("Recharge_Available", privateCSReceivedData.getRechargeAvailable());
-        payload.addMetric("Recharge_In_Progress", privateCSReceivedData.getRechargeInProgress());
-        payload.addMetric("PV_System_Active", privateCSReceivedData.getPvSystemActive());
-        payload.addMetric("Aux_Charger_Active", privateCSReceivedData.getAuxChargerActive());
-        payload.addMetric("Storage_Battery_Concactor_Sts", privateCSReceivedData.getStorageBatterySts());
-        payload.addMetric("Converter_Contactor_Sts", privateCSReceivedData.getConverterContactorSts());
-        payload.addMetric("IGBT_Temperature", privateCSReceivedData.getIgbtTemp());
-        payload.addMetric("Storage_Battery_Temperature", privateCSReceivedData.getStorageBatteryTemp());
-        payload.addMetric("Storage_Battery_SOC", privateCSReceivedData.getStorageBatterySOC());
+            // Add all the needed data to the payload
+            payload.addMetric("Power_Out", publicCSReceivedData.getPowerOut());
+            payload.addMetric("Minutes_to_Recharge_Estimated", publicCSReceivedData.getMinutesToRecharge());
+            payload.addMetric("Seconds_to_Recharge_Estimated", publicCSReceivedData.getSecondsToRecharge());
+            payload.addMetric("Energy_Out", publicCSReceivedData.getEnergyOut());
+            payload.addMetric("Power_PV", publicCSReceivedData.getPowerPV());
 
-        payload.addMetric("V_Out ", privateCSReceivedData.getvOut());
-        payload.addMetric("Storage_Battery_V", privateCSReceivedData.getStorageBatteryV());
-        payload.addMetric("PV_System_V", privateCSReceivedData.getPvSystemV());
-        payload.addMetric("I_Out", privateCSReceivedData.getiOut());
-        payload.addMetric("Storage_Battery_I ", privateCSReceivedData.getStorageBatteryI());
+            payload.addMetric("Recharge_Available", publicCSReceivedData.getRechargeAvailable());
+            payload.addMetric("Recharge_In_Progress", publicCSReceivedData.getRechargeInProgress());
+            payload.addMetric("PV_System_Active", publicCSReceivedData.getPvSystemActive());
+            payload.addMetric("Aux_Charger_Active", publicCSReceivedData.getAuxChargerActive());
+            payload.addMetric("Storage_Battery_Concactor_Sts", publicCSReceivedData.getStorageBatterySts());
+            payload.addMetric("Converter_Contactor_Sts", publicCSReceivedData.getConverterContactorSts());
+            payload.addMetric("IGBT_Temperature", publicCSReceivedData.getIgbtTemp());
+            payload.addMetric("Storage_Battery_Temperature", publicCSReceivedData.getStorageBatteryTemp());
+            payload.addMetric("Storage_Battery_SOC", publicCSReceivedData.getStorageBatterySOC());
 
-        privateCSReceivedData.resetData();
+            payload.addMetric("V_Out ", publicCSReceivedData.getvOut());
+            payload.addMetric("Storage_Battery_V", publicCSReceivedData.getStorageBatteryV());
+            payload.addMetric("PV_System_V", publicCSReceivedData.getPvSystemV());
+            payload.addMetric("I_Out", publicCSReceivedData.getiOut());
+            payload.addMetric("Storage_Battery_I ", publicCSReceivedData.getStorageBatteryI());
 
-        // Publish the message
-        try {
-            cloudClient.publish(topic, payload, qos, retain);
-            s_logger.info("Published to {} message: {}", topic, payload);
-        } catch (Exception e) {
-            s_logger.error("Cannot publish topic: " + topic, e);
+            publicCSReceivedData.resetData();
+        } else if (MODALITY_T311.equals(chosenModality)) {
+            // fetch the publishing configuration from the publishing properties
+            topic = "privatecsdata";
+            qos = 0;
+            retain = false;
+
+            // Timestamp the message
+            payload.setTimestamp(new Date());
+
+            // Add all the needed data to the payload
+            payload.addMetric("Power_Out", privateCSReceivedData.getPowerOut());
+            payload.addMetric("Hours_to_Recharge_Estimated", privateCSReceivedData.getHoursToRecharge());
+            payload.addMetric("Minutes_to_Recharge_Estimated", privateCSReceivedData.getMinutesToRecharge());
+            payload.addMetric("Energy_Out", privateCSReceivedData.getEnergyOut());
+            payload.addMetric("Power_PV", privateCSReceivedData.getPowerPV());
+
+            payload.addMetric("Recharge_Available", privateCSReceivedData.getRechargeAvailable());
+            payload.addMetric("Recharge_In_Progress", privateCSReceivedData.getRechargeInProgress());
+            payload.addMetric("PV_System_Active", privateCSReceivedData.getPvSystemActive());
+            payload.addMetric("Aux_Charger_Active", privateCSReceivedData.getAuxChargerActive());
+            payload.addMetric("Storage_Battery_Concactor_Sts", privateCSReceivedData.getStorageBatterySts());
+            payload.addMetric("Converter_Contactor_Sts", privateCSReceivedData.getConverterContactorSts());
+            payload.addMetric("IGBT_Temperature", privateCSReceivedData.getIgbtTemp());
+            payload.addMetric("Storage_Battery_Temperature", privateCSReceivedData.getStorageBatteryTemp());
+            payload.addMetric("Storage_Battery_SOC", privateCSReceivedData.getStorageBatterySOC());
+
+            payload.addMetric("V_Out ", privateCSReceivedData.getvOut());
+            payload.addMetric("Storage_Battery_V", privateCSReceivedData.getStorageBatteryV());
+            payload.addMetric("PV_System_V", privateCSReceivedData.getPvSystemV());
+            payload.addMetric("I_Out", privateCSReceivedData.getiOut());
+            payload.addMetric("Storage_Battery_I ", privateCSReceivedData.getStorageBatteryI());
+
+            privateCSReceivedData.resetData();
+        }
+
+        if (topic != null) {
+            // Publish the message
+            try {
+                cloudClient.publish(topic, payload, qos, retain);
+                s_logger.info("Published to {} message: {}", topic, payload);
+            } catch (Exception e) {
+                s_logger.error("Cannot publish topic: " + topic, e);
+            }
         }
     }
 }

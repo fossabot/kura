@@ -12,6 +12,18 @@
             default="can0"
             description="CAN socket Name."/>
             
+       <AD id="arrowhead.modality"
+            name="arrowhead.modality"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="t3.1.1"
+            description="Specify modality">
+           <Option label="t3.1.1" value="t3.1.1"/>
+           <Option label="t3.1.2" value="t3.1.2"/>          
+           <Option label="t3.2" value="t3.2"/>          
+        </AD>
+            
        <AD id="can.bigendian"
             name="can.bigendian"
             type="Boolean"

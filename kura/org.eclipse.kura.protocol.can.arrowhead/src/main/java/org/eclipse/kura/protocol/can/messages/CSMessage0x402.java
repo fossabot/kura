@@ -21,7 +21,7 @@ public class CSMessage0x402 {
     public static void parseCanMessage(CanMessage cm, MotoTronDataSnapshot motoTronReceivedData) {
         byte[] b = cm.getData();
         if (b != null && b.length == 6) {
-            StringBuilder sb = new StringBuilder("received : ");
+            StringBuilder sb = new StringBuilder("received 0x402: ");
 
             int localBookingId = (char) b[0];
             char plateCharacter8 = (char) b[1];

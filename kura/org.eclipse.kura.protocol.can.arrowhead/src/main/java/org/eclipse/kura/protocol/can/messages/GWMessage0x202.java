@@ -14,10 +14,13 @@ import org.slf4j.LoggerFactory;
 public class GWMessage0x202 {
     private static final Logger s_logger = LoggerFactory.getLogger(ArrowheadCanSocketImpl.class);
 
-    private GWMessage0x202() {
+    private static final int MESSAGE_ID = 0x202;
+
+    public static int getId() {
+        return MESSAGE_ID;
     }
 
-    public static byte[] createMessage(int id, CurrentDateInfo currentDateInfo, boolean isBigEndian) {
+    public static byte[] createMessage(CurrentDateInfo currentDateInfo, boolean isBigEndian) {
         StringBuilder sb = new StringBuilder("Trying to create can frame message 3 with value = ");
         byte[] bCurrentDate = new byte[4];
         int currentDateDay = currentDateInfo.getCurrentDateDay();
@@ -50,7 +53,7 @@ public class GWMessage0x202 {
         }
 
         sb.append(" and id = ");
-        sb.append(id);
+        sb.append(MESSAGE_ID);
         s_logger.debug(sb.toString());
 
         return bCurrentDate;

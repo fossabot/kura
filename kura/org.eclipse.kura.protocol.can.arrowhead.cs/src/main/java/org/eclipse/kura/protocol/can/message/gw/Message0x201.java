@@ -11,7 +11,7 @@ public class Message0x201 {
     public static void parseGwCanMessage(CanMessage cm, boolean isBigEndian) {
         byte[] b = cm.getData();
         if (b != null && b.length == 8) {
-            StringBuilder sb = new StringBuilder("received : ");
+            StringBuilder sb = new StringBuilder("received 0x201: ");
 
             int bookingTimeHour = b[0]; // Booking time: hour
             int bookingTimeMinute = b[1]; // Booking time: minute

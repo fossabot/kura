@@ -9,11 +9,13 @@ public class Message0x400 {
 
     public static void parseGwCanMessage(CanMessage cm) {
         byte[] b = cm.getData();
-        if (b != null && b.length == 1) {
-            StringBuilder sb = new StringBuilder("received : ");
+        if (b != null && b.length == 2) {
+            StringBuilder sb = new StringBuilder("received 0x400: ");
 
-            int localBookingId = b[0]; // local booking id [0,255]
+            int startRecharge = b[0] & 0x01;
+            int localBookingId = b[1]; // local booking id [0,255]
 
+            sb.append("Start recharge: " + startRecharge + ", ");
             sb.append("Local booking id: " + localBookingId + " ");
 
             sb.append(" on id = ");

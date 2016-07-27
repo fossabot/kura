@@ -1,5 +1,7 @@
 package org.eclipse.kura.protocol.can.message.cs;
 
+import java.util.Map;
+
 public class Message0x402 {
     public static final String LOCAL_BOOKING_ID = "local.booking.id";
     public static final String PLATE_CHAR_8     = "plate.char.8";
@@ -50,5 +52,14 @@ public class Message0x402 {
     }
     public void setPlateChar12(char plateChar12) {
         this.plateChar12 = plateChar12;
+    }
+    
+    public void populateMessageInfo(Map<String, Object> properties) {
+        setLocalBookingId(Integer.parseInt((String) properties.get(LOCAL_BOOKING_ID)));
+        setPlateChar8((Character) properties.get(PLATE_CHAR_8));
+        setPlateChar9((Character) properties.get(PLATE_CHAR_9));
+        setPlateChar10((Character) properties.get(PLATE_CHAR_10));
+        setPlateChar11((Character) properties.get(PLATE_CHAR_11));
+        setPlateChar12((Character) properties.get(PLATE_CHAR_12));
     }
 }

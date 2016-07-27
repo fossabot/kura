@@ -2,6 +2,8 @@ package org.eclipse.kura.protocol.can.cs.data;
 
 public class MotoTronDataSnapshot {
 
+    private int startRecharge;
+    
     private int accessIndex;
 
     //Parameters for MotoTron
@@ -20,6 +22,14 @@ public class MotoTronDataSnapshot {
     private char vehiclePlateCharacter12;
 
 
+    public int getStartRecharge() {
+        return startRecharge;
+    }
+
+    public void setStartRecharge(int startRecharge) {
+        this.startRecharge = startRecharge;
+    }
+
     public int getLocalBookingId() {
         return localBookingId;
     }
@@ -27,6 +37,7 @@ public class MotoTronDataSnapshot {
     public void setLocalBookingId(int localBookingId) {
         this.localBookingId = localBookingId;
         accessIndex++;
+        accessIndex = accessIndex % 2;
     }
 
     public char getVehiclePlateCharacter1() {

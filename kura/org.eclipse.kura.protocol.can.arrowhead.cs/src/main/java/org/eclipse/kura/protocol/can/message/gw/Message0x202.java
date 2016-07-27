@@ -11,7 +11,7 @@ public class Message0x202 {
     public static void parseGwCanMessage3(CanMessage cm, boolean isBigEndian) {
         byte[] b = cm.getData();
         if (b != null && b.length == 4) {
-            StringBuilder sb = new StringBuilder("received : ");
+            StringBuilder sb = new StringBuilder("received 0x202: ");
 
             int currentDateDay = b[0];
             int currentDateMonth = b[1];

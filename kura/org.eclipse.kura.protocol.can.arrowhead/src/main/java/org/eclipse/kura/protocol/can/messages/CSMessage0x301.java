@@ -32,7 +32,7 @@ public class CSMessage0x301 {
     public static void parseCanMessage(CanMessage cm, PrivateCSDataSnapshot privateCSReceivedData) {
         byte[] b = cm.getData();
         if (b != null && b.length == 5) {
-            StringBuilder sb = new StringBuilder("received : ");
+            StringBuilder sb = new StringBuilder("received 0x301: ");
 
             int faultFlag = b[0] & 0x01;
             int rechargeAvailable = (b[0] & 0x02) >> 1;

@@ -16,6 +16,8 @@ import org.eclipse.kura.protocol.can.message.cs.Message0x102;
 import org.eclipse.kura.protocol.can.message.cs.Message0x300;
 import org.eclipse.kura.protocol.can.message.cs.Message0x301;
 import org.eclipse.kura.protocol.can.message.cs.Message0x302;
+import org.eclipse.kura.protocol.can.message.cs.Message0x401;
+import org.eclipse.kura.protocol.can.message.cs.Message0x402;
 import org.eclipse.kura.protocol.can.message.gw.Message0x200;
 import org.eclipse.kura.protocol.can.message.gw.Message0x201;
 import org.eclipse.kura.protocol.can.message.gw.Message0x202;
@@ -25,6 +27,10 @@ import org.eclipse.kura.protocol.can.utils.MessageUtils;
 public class CanSocketTest implements ConfigurableComponent {
     private static final Logger s_logger      = LoggerFactory.getLogger(CanSocketTest.class);
     private static final String IS_BIG_ENDIAN = "can.bigendian";
+    private static final String MODALITY      = "arrowhead.modality";
+    private static final String MODALITY_T311 = "t3.1.1";
+    private static final String MODALITY_T312 = "t3.1.2";
+    private static final String MODALITY_T32  = "t3.2";
 
     private CanConnectionService m_canConnection;
     private Map<String, Object>  m_properties;
@@ -33,14 +39,18 @@ public class CanSocketTest implements ConfigurableComponent {
     private String               m_ifName;
     private int                  m_nextMessageIndex;
     private boolean              isBigEndian = true;
+    private String               modality;
 
     private Message0x100 message0x100Info;
     private Message0x101 message0x101Info;
     private Message0x102 message0x102Info;
-    
+
     private Message0x300 message0x300Info;
     private Message0x301 message0x301Info;
     private Message0x302 message0x302Info;
+
+    private Message0x401 message0x401Info;
+    private Message0x402 message0x402Info;
 
     private int counter = 0;
 
@@ -58,26 +68,35 @@ public class CanSocketTest implements ConfigurableComponent {
         m_ifName = "can0";
 
         if (m_properties != null) {
-            if (m_properties.get("can.name") != null)
+            if (m_properties.get("can.name") != null) {
                 m_ifName = (String) m_properties.get("can.name");
+            }
+
+            modality = (String) m_properties.get(MODALITY);
 
             message0x100Info = new Message0x100();
             message0x100Info.populateMessageInfo(m_properties);
-            
+
             message0x101Info = new Message0x101();
             message0x101Info.populateMessageInfo(m_properties);
-            
+
             message0x102Info = new Message0x102();
             message0x102Info.populateMessageInfo(m_properties);
-            
+
             message0x300Info = new Message0x300();
             message0x300Info.populateMessageInfo(m_properties);
-            
+
             message0x301Info = new Message0x301();
             message0x301Info.populateMessageInfo(m_properties);
-            
+
             message0x302Info = new Message0x302();
             message0x302Info.populateMessageInfo(m_properties);
+
+            message0x401Info = new Message0x401();
+            message0x401Info.populateMessageInfo(m_properties);
+
+            message0x402Info = new Message0x402();
+            message0x402Info.populateMessageInfo(m_properties);
 
             isBigEndian = (Boolean) m_properties.get(IS_BIG_ENDIAN);
         }
@@ -121,7 +140,7 @@ public class CanSocketTest implements ConfigurableComponent {
                     while (true) {
                         doSendTest();
                         try {
-                            Thread.sleep(10);
+                            Thread.sleep(1000);
                         } catch (InterruptedException e) {}
                     }
                 }
@@ -160,14 +179,32 @@ public class CanSocketTest implements ConfigurableComponent {
             if (m_properties.get("can.name") != null) {
                 m_ifName = (String) m_properties.get("can.name");
             }
+
+            modality = (String) m_properties.get(MODALITY);
+
             message0x100Info = new Message0x100();
             message0x100Info.populateMessageInfo(m_properties);
-            
+
             message0x101Info = new Message0x101();
             message0x101Info.populateMessageInfo(m_properties);
-            
+
             message0x102Info = new Message0x102();
             message0x102Info.populateMessageInfo(m_properties);
+
+            message0x300Info = new Message0x300();
+            message0x300Info.populateMessageInfo(m_properties);
+
+            message0x301Info = new Message0x301();
+            message0x301Info.populateMessageInfo(m_properties);
+
+            message0x302Info = new Message0x302();
+            message0x302Info.populateMessageInfo(m_properties);
+
+            message0x401Info = new Message0x401();
+            message0x401Info.populateMessageInfo(m_properties);
+
+            message0x402Info = new Message0x402();
+            message0x402Info.populateMessageInfo(m_properties);
 
             isBigEndian = (Boolean) m_properties.get(IS_BIG_ENDIAN);
         }
@@ -206,19 +243,23 @@ public class CanSocketTest implements ConfigurableComponent {
 
     public void doSendTest() {
 
+        if (MODALITY_T311.equals(modality)) {
+            doSendT311();
+        } else if (MODALITY_T312.equals(modality)) {
+            doSendT312();
+        } else {
+            doSendT32();
+        }
+    }
+
+    private void doSendT311() {
         try {
             if (counter != 0) {
-                sendMessage0x100(m_ifName);
-                Thread.sleep(10);
                 sendMessage0x300(m_ifName);
             } else {
                 if (m_nextMessageIndex == 0) {
-                    sendMessage0x101(m_ifName);
-                    Thread.sleep(10);
                     sendMessage0x301(m_ifName);
                 } else if (m_nextMessageIndex == 1) {
-                    sendMessage0x102(m_ifName);
-                    Thread.sleep(10);
                     sendMessage0x302(m_ifName);
                 }
                 m_nextMessageIndex++;
@@ -231,6 +272,41 @@ public class CanSocketTest implements ConfigurableComponent {
         counter = counter % 10;
     }
 
+    private void doSendT312() {
+        try {
+            if (counter != 0) {
+                sendMessage0x100(m_ifName);
+            } else {
+                if (m_nextMessageIndex == 0) {
+                    sendMessage0x101(m_ifName);
+                } else if (m_nextMessageIndex == 1) {
+                    sendMessage0x102(m_ifName);
+                }
+                m_nextMessageIndex++;
+                m_nextMessageIndex = m_nextMessageIndex % 2;
+            }
+        } catch (Exception e) {
+            s_logger.warn("CanConnection Crash!", e);
+        }
+        counter++;
+        counter = counter % 10;
+    }
+
+    private void doSendT32() {
+        try {
+            if (m_nextMessageIndex == 0) {
+                sendMessage0x401(m_ifName);
+            } else if (m_nextMessageIndex == 1) {
+                sendMessage0x402(m_ifName);
+            }
+            m_nextMessageIndex++;
+            m_nextMessageIndex = m_nextMessageIndex % 2;
+        } catch (Exception e) {
+            s_logger.warn("CanConnection Crash!", e);
+        }
+
+    }
+
     private void sendMessage0x100(String ifName) throws KuraException, IOException {
 
         if ((m_canConnection == null))
@@ -240,13 +316,13 @@ public class CanSocketTest implements ConfigurableComponent {
         byte bMessage[] = new byte[8];
         int powerOut = message0x100Info.getPowerOut(); // Power Out [W]
         int timeToRechargeMinutes = message0x100Info.getTimeToRechargeMinutes(); // Time
-                                                                             // to
-                                                                             // recharge
-                                                                             // [minutes]
+        // to
+        // recharge
+        // [minutes]
         int timeToRechargeSeconds = message0x100Info.getTimeToRechargeSeconds(); // Time
-                                                                             // to
-                                                                             // recharge
-                                                                             // [seconds]
+        // to
+        // recharge
+        // [seconds]
         int energyOut = message0x100Info.getEnergyOut(); // Energy Out [Wh]
         int powerPV = message0x100Info.getPowerPV(); // Power PV Out [W]
 
@@ -313,29 +389,29 @@ public class CanSocketTest implements ConfigurableComponent {
 
         int faultFlag = message0x101Info.isFaultFlag(); // fault flag [0,1]
         int rechargeAvailable = (message0x101Info.isRechargeAvailable() << 1); // recharge
-                                                                           // available
-                                                                           // [0,1]
+        // available
+        // [0,1]
         int rechargeInProgress = (message0x101Info.isRechargeInProgress() << 2); // recharge
-                                                                             // in
-                                                                             // progress
-                                                                             // [0,1]
+        // in
+        // progress
+        // [0,1]
         int pvSystemActive = (message0x101Info.isPvSystemActive() << 3); // Pv
-                                                                     // System
-                                                                     // Active
-                                                                     // [0,1]
+        // System
+        // Active
+        // [0,1]
         int auxChargerActive = (message0x101Info.isAuxChargerActive() << 4); // Aux
-                                                                         // Charger
-                                                                         // Active
-                                                                         // [0,1]
+        // Charger
+        // Active
+        // [0,1]
         int storageBatteryContractorStatus = (message0x101Info.isStorageBatteryContactorStatus() << 5); // Storage
-                                                                                                    // Battery
-                                                                                                    // Contactor
-                                                                                                    // Status
-                                                                                                    // [0,1]
+        // Battery
+        // Contactor
+        // Status
+        // [0,1]
         int converterContractorStatus = (message0x101Info.isConverterContactorStatus() << 6); // Converter
-                                                                                          // Contactor
-                                                                                          // Status
-                                                                                          // [0,1]
+        // Contactor
+        // Status
+        // [0,1]
 
         int faultString = message0x101Info.getFaultString();
         int igbtTemp = message0x101Info.getIgbtTemp();
@@ -400,24 +476,24 @@ public class CanSocketTest implements ConfigurableComponent {
 
         if (isBigEndian) {
             bCurrentDate[2] = (byte) ((storageBatteryV >> 8) & 0xFF); // Storage_Battery_V
-                                                                      // [V]
+            // [V]
             bCurrentDate[3] = (byte) (storageBatteryV & 0xFF); // Storage_Battery_V
-                                                               // [V]
+            // [V]
         } else {
             bCurrentDate[2] = (byte) (storageBatteryV & 0xFF); // Storage_Battery_V
-                                                               // [V]
+            // [V]
             bCurrentDate[3] = (byte) ((storageBatteryV >> 8) & 0xFF); // Storage_Battery_V
-                                                                      // [V]
+            // [V]
         }
 
         if (isBigEndian) {
             bCurrentDate[4] = (byte) ((pvSystemV >> 8) & 0xFF); // PV_System_V
-                                                                // [V]
+            // [V]
             bCurrentDate[5] = (byte) (pvSystemV & 0xFF); // PV_System_V [V]
         } else {
             bCurrentDate[4] = (byte) (pvSystemV & 0xFF); // PV_System_V [V]
             bCurrentDate[5] = (byte) ((pvSystemV >> 8) & 0xFF); // PV_System_V
-                                                                // [V]
+            // [V]
         }
 
         bCurrentDate[6] = (byte) iOut; // I_Out [A]
@@ -451,8 +527,7 @@ public class CanSocketTest implements ConfigurableComponent {
         m_canConnection.sendCanMessage(ifName, id, bCurrentDate);
         s_logger.info("Message sent with id: " + id);
     }
-    
-    
+
     //
     // 0x30x messages
     private void sendMessage0x300(String ifName) throws KuraException, IOException {
@@ -464,13 +539,13 @@ public class CanSocketTest implements ConfigurableComponent {
         byte bMessage[] = new byte[8];
         int powerOut = message0x300Info.getPowerOut(); // Power Out [W]
         int timeToRechargeMinutes = message0x300Info.getTimeToRechargeMinutes(); // Time
-                                                                             // to
-                                                                             // recharge
-                                                                             // [minutes]
+        // to
+        // recharge
+        // [minutes]
         int timeToRechargeHours = message0x300Info.getTimeToRechargeHours(); // Time
-                                                                             // to
-                                                                             // recharge
-                                                                             // [hours]
+        // to
+        // recharge
+        // [hours]
         int energyOut = message0x300Info.getEnergyOut(); // Energy Out [Wh]
         int powerPV = message0x300Info.getPowerPV(); // Power PV Out [W]
 
@@ -537,29 +612,29 @@ public class CanSocketTest implements ConfigurableComponent {
 
         int faultFlag = message0x301Info.isFaultFlag(); // fault flag [0,1]
         int rechargeAvailable = (message0x301Info.isRechargeAvailable() << 1); // recharge
-                                                                           // available
-                                                                           // [0,1]
+        // available
+        // [0,1]
         int rechargeInProgress = (message0x301Info.isRechargeInProgress() << 2); // recharge
-                                                                             // in
-                                                                             // progress
-                                                                             // [0,1]
+        // in
+        // progress
+        // [0,1]
         int pvSystemActive = (message0x301Info.isPvSystemActive() << 3); // Pv
-                                                                     // System
-                                                                     // Active
-                                                                     // [0,1]
+        // System
+        // Active
+        // [0,1]
         int auxChargerActive = (message0x301Info.isAuxChargerActive() << 4); // Aux
-                                                                         // Charger
-                                                                         // Active
-                                                                         // [0,1]
+        // Charger
+        // Active
+        // [0,1]
         int storageBatteryContractorStatus = (message0x301Info.isStorageBatteryContactorStatus() << 5); // Storage
-                                                                                                    // Battery
-                                                                                                    // Contactor
-                                                                                                    // Status
-                                                                                                    // [0,1]
+        // Battery
+        // Contactor
+        // Status
+        // [0,1]
         int converterContractorStatus = (message0x301Info.isConverterContactorStatus() << 6); // Converter
-                                                                                          // Contactor
-                                                                                          // Status
-                                                                                          // [0,1]
+        // Contactor
+        // Status
+        // [0,1]
 
         int faultString = message0x301Info.getFaultString();
         int igbtTemp = message0x301Info.getIgbtTemp();
@@ -624,24 +699,24 @@ public class CanSocketTest implements ConfigurableComponent {
 
         if (isBigEndian) {
             bCurrentDate[2] = (byte) ((storageBatteryV >> 8) & 0xFF); // Storage_Battery_V
-                                                                      // [V]
+            // [V]
             bCurrentDate[3] = (byte) (storageBatteryV & 0xFF); // Storage_Battery_V
-                                                               // [V]
+            // [V]
         } else {
             bCurrentDate[2] = (byte) (storageBatteryV & 0xFF); // Storage_Battery_V
-                                                               // [V]
+            // [V]
             bCurrentDate[3] = (byte) ((storageBatteryV >> 8) & 0xFF); // Storage_Battery_V
-                                                                      // [V]
+            // [V]
         }
 
         if (isBigEndian) {
             bCurrentDate[4] = (byte) ((pvSystemV >> 8) & 0xFF); // PV_System_V
-                                                                // [V]
+            // [V]
             bCurrentDate[5] = (byte) (pvSystemV & 0xFF); // PV_System_V [V]
         } else {
             bCurrentDate[4] = (byte) (pvSystemV & 0xFF); // PV_System_V [V]
             bCurrentDate[5] = (byte) ((pvSystemV >> 8) & 0xFF); // PV_System_V
-                                                                // [V]
+            // [V]
         }
 
         bCurrentDate[6] = (byte) iOut; // I_Out [A]
@@ -673,6 +748,86 @@ public class CanSocketTest implements ConfigurableComponent {
         s_logger.debug(sb.toString());
 
         m_canConnection.sendCanMessage(ifName, id, bCurrentDate);
+        s_logger.info("Message sent with id: " + id);
+    }
+
+    private void sendMessage0x401(String ifName) throws KuraException, IOException {
+
+        if ((m_canConnection == null))
+            return;
+        int id = 0x401;
+        StringBuilder sb = new StringBuilder("Trying to send message 0x401 can frame with message = ");
+        byte[] bMessage = new byte[8];
+
+        int localBookingId = message0x401Info.getLocalBookingId();
+        char plateChar1 = message0x401Info.getPlateChar1();
+        char plateChar2 = message0x401Info.getPlateChar2();
+        char plateChar3 = message0x401Info.getPlateChar3();
+        char plateChar4 = message0x401Info.getPlateChar4();
+        char plateChar5 = message0x401Info.getPlateChar5();
+        char plateChar6 = message0x401Info.getPlateChar6();
+        char plateChar7 = message0x401Info.getPlateChar7();
+
+        bMessage[0] = (byte) localBookingId;
+        bMessage[1] = (byte) plateChar1;
+        bMessage[2] = (byte) plateChar2;
+        bMessage[3] = (byte) plateChar3;
+        bMessage[4] = (byte) plateChar4;
+        bMessage[5] = (byte) plateChar5;
+        bMessage[6] = (byte) plateChar6;
+        bMessage[7] = (byte) plateChar7;
+
+        sb.append("LocalBooking id: " + bMessage[0] + ", ");
+        sb.append("plateChar1: " + bMessage[1] + ", ");
+        sb.append("plateChar2: " + bMessage[2] + ", ");
+        sb.append("plateChar3: " + bMessage[3] + ", ");
+        sb.append("plateChar4: " + bMessage[4] + ", ");
+        sb.append("plateChar5: " + bMessage[5] + ", ");
+        sb.append("plateChar6: " + bMessage[6] + ", ");
+        sb.append("plateChar7: " + bMessage[7] + ", ");
+
+        sb.append(" and id = ");
+        sb.append(id);
+        s_logger.debug(sb.toString());
+
+        m_canConnection.sendCanMessage(ifName, id, bMessage);
+        s_logger.info("Message sent with id: " + id);
+    }
+
+    private void sendMessage0x402(String ifName) throws KuraException, IOException {
+
+        if ((m_canConnection == null))
+            return;
+        int id = 0x402;
+        StringBuilder sb = new StringBuilder("Trying to send message 0x402 can frame with message = ");
+        byte bMessage[] = new byte[6];
+
+        int localBookingId = message0x402Info.getLocalBookingId();
+        char plateChar8 = message0x402Info.getPlateChar8();
+        char plateChar9 = message0x402Info.getPlateChar9();
+        char plateChar10 = message0x402Info.getPlateChar10();
+        char plateChar11 = message0x402Info.getPlateChar11();
+        char plateChar12 = message0x402Info.getPlateChar12();
+
+        bMessage[0] = (byte) localBookingId;
+        bMessage[1] = (byte) plateChar8;
+        bMessage[2] = (byte) plateChar9;
+        bMessage[3] = (byte) plateChar10;
+        bMessage[4] = (byte) plateChar11;
+        bMessage[5] = (byte) plateChar12;
+
+        sb.append("LocalBooking id: " + bMessage[0] + ", ");
+        sb.append("plateChar8: " + bMessage[1] + ", ");
+        sb.append("plateChar9: " + bMessage[2] + ", ");
+        sb.append("plateChar10: " + bMessage[3] + ", ");
+        sb.append("plateChar11: " + bMessage[4] + ", ");
+        sb.append("plateChar12: " + bMessage[5] + ", ");
+
+        sb.append(" and id = ");
+        sb.append(id);
+        s_logger.debug(sb.toString());
+
+        m_canConnection.sendCanMessage(ifName, id, bMessage);
         s_logger.info("Message sent with id: " + id);
     }
 }

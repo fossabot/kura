@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MetaData xmlns="http://www.osgi.org/xmlns/metatype/v1.2.0" localization="en_us">
-    <OCD id="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest"
+    <OCD id="org.eclipse.kura.protocol.can.arrowhead.ArrowheadCanSocketImpl"
          name="Can network test" 
          description="Can network example application.">
               
@@ -20,6 +20,18 @@
             required="true"
             default="can0"
             description="CAN socket Name."/>
+            
+       <AD id="arrowhead.modality"
+            name="arrowhead.modality"
+            type="String"
+            cardinality="0" 
+            required="true"
+            default="t3.1.1"
+            description="Specify modality">
+           <Option label="t3.1.1" value="t3.1.1"/>
+           <Option label="t3.1.2" value="t3.1.2"/>          
+           <Option label="t3.2" value="t3.2"/>          
+        </AD>
             
        <AD id="can.initial.threads.delay"
             name="can.initial.threads.delay"
@@ -207,7 +219,7 @@
             
             
     </OCD>
-    <Designate pid="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest">
-        <Object ocdref="org.eclipse.kura.protocol.can.arrowhead.CanSocketTest"/>
+    <Designate pid="org.eclipse.kura.protocol.can.arrowhead.ArrowheadCanSocketImpl">
+        <Object ocdref="org.eclipse.kura.protocol.can.arrowhead.ArrowheadCanSocketImpl"/>
     </Designate>
 </MetaData>

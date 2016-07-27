@@ -165,7 +165,7 @@ public class PrivateCSDataSnapshot {
         return minutesToRecharge;
     }
 
-    public int getSecondsToRecharge() {
+    public int getHoursToRecharge() {
         return hoursToRecharge;
     }
 

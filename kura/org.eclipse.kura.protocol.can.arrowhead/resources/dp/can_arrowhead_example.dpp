@@ -1,22 +1,22 @@
 #Deployment Plugin Project File
-#Thu Oct 15 15:06:59 CEST 2015
+#Mon Jul 25 18:55:00 CEST 2016
 build.ant.name=<.>/resources/dp/can_arrowhead_example_build.xml
 build.dp.file=<.>/resources/dp/can_arrowhead_example.dp
 build.location=
-bundles.0.bundle_path=/Users/matteo.maiero/Desktop/plugins/org.eclipse.kura.protocol.can_1.0.2.201508.jar
+bundles.0.bundle_path=/Users/matteo.maiero/git_MMaiero/kura/kura/org.eclipse.kura.protocol.can/target/org.eclipse.kura.protocol.can-1.0.2-SNAPSHOT.jar
 bundles.0.customizer=false
 bundles.0.headers.count=0
 bundles.0.missing=false
-bundles.0.name=bundles/org.eclipse.kura.protocol.can_1.0.2.201508.jar
+bundles.0.name=bundles/org.eclipse.kura.protocol.can-1.0.2-SNAPSHOT.jar
 bundles.0.symbolic_name=org.eclipse.kura.protocol.can;singleton\:\=true
-bundles.0.version=1.0.2.201508
-bundles.1.bundle_path=/Users/matteo.maiero/Desktop/plugins/org.eclipse.kura.protocol.can.arrowhead_1.0.2.201510.jar
+bundles.0.version=1.0.2.201607251853
+bundles.1.bundle_path=<.>/target/org.eclipse.kura.protocol.can.arrowhead-1.0.2-SNAPSHOT.jar
 bundles.1.customizer=false
 bundles.1.headers.count=0
 bundles.1.missing=false
-bundles.1.name=bundles/org.eclipse.kura.protocol.can.arrowhead_1.0.2.201510.jar
+bundles.1.name=bundles/org.eclipse.kura.protocol.can.arrowhead-1.0.2-SNAPSHOT.jar
 bundles.1.symbolic_name=org.eclipse.kura.protocol.can.arrowhead;singleton\:\=true
-bundles.1.version=1.0.2.201510
+bundles.1.version=1.0.2.201607251852
 bundles.count=2
 certificates.count=0
 general.signbundles=false

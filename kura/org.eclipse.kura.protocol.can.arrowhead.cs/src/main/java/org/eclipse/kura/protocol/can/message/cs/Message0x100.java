@@ -54,8 +54,7 @@ public class Message0x100 {
     public void setPowerPV(int powerPV) {
         this.powerPV = powerPV;
     }
-    
-    
+
     public void populateMessageInfo(Map<String, Object> properties) {
         setPowerOut(Integer.parseInt((String) properties.get(POWER_OUT)));
         setTimeToRechargeMinutes(Integer.parseInt((String) properties.get(TIME_TO_RECHARGE_MINUTES)));
