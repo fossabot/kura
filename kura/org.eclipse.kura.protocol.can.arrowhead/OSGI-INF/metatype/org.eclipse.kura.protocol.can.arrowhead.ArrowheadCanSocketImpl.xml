@@ -32,6 +32,14 @@
            <Option label="t3.1.2" value="t3.1.2"/>          
            <Option label="t3.2" value="t3.2"/>          
         </AD>
+        
+        <AD id="arrowhead.t32.idotg"
+            name="arrowhead.t32.idotg"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="Susa_901070bd"
+            description="arrowhead.t32.idotg"/>
             
        <AD id="can.initial.threads.delay"
             name="can.initial.threads.delay"

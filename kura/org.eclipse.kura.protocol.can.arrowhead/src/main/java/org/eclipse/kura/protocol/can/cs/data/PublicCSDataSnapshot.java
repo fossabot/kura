@@ -10,12 +10,14 @@ public class PublicCSDataSnapshot {
     private int powerPV;
 
     // Message 0x101
+    private int faultFlag;
     private int rechargeAvailable;
     private int rechargeInProgress;
     private int pvSystemActive;
     private int auxChargerActive;
     private int storageBatterySts;
     private int converterContactorSts;
+    private int faultString;
     private int igbtTemp;
     private int storageBatteryTemp;
     private int storageBatterySOC;
@@ -34,12 +36,14 @@ public class PublicCSDataSnapshot {
         secondsToRecharge = 0;
         energyOut = 0;
         powerPV = 0;
+        faultFlag = 0;
         rechargeAvailable = 0;
         rechargeInProgress = 0;
         pvSystemActive = 0;
         auxChargerActive = 0;
         storageBatterySts = 0;
         converterContactorSts = 0;
+        faultString = 0;
         igbtTemp = 0;
         storageBatteryTemp = 0;
         storageBatterySOC = 0;
@@ -57,12 +61,14 @@ public class PublicCSDataSnapshot {
         secondsToRecharge = 0;
         energyOut = 0;
         powerPV = 0;
+        faultFlag = 0;
         rechargeAvailable = 0;
         rechargeInProgress = 0;
         pvSystemActive = 0;
         auxChargerActive = 0;
         storageBatterySts = 0;
         converterContactorSts = 0;
+        faultString = 0;
         igbtTemp = 0;
         storageBatteryTemp = 0;
         storageBatterySOC = 0;
@@ -72,6 +78,10 @@ public class PublicCSDataSnapshot {
         iOut = 0;
         storageBatteryI = 0;
         index = 0;
+    }
+
+    public void setFaultFlag(int faultFlag) {
+        this.faultFlag = faultFlag;
     }
 
     public void setPowerOut(int powerOut) {
@@ -124,6 +134,10 @@ public class PublicCSDataSnapshot {
     public void setConverterContactorSts(int converterContactorSts) {
         this.converterContactorSts = converterContactorSts;
     }
+    
+    public void setFaultString(int faultString) {
+        this.faultString = faultString;
+    }
 
     public void setIGBTTemp(int iGBTTemp) {
         this.igbtTemp = Math.max(this.igbtTemp, iGBTTemp);
@@ -155,6 +169,10 @@ public class PublicCSDataSnapshot {
 
     public void setStorageBatteryI(int storageBatteryI) {
         this.storageBatteryI = this.storageBatteryI + storageBatteryI;
+    }
+    
+    public int getFaultFlag() {
+        return faultFlag;
     }
 
     public int getPowerOut() {
@@ -201,6 +219,10 @@ public class PublicCSDataSnapshot {
         return converterContactorSts;
     }
 
+    public int getFaultString() {
+        return faultString;
+    }
+    
     public int getIgbtTemp() {
         return igbtTemp;
     }
@@ -245,4 +267,5 @@ public class PublicCSDataSnapshot {
     public void increaseIndex() {
         index++;
     }
+
 }

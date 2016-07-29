@@ -3,11 +3,11 @@ package org.eclipse.kura.protocol.can.cs.data;
 public class MotoTronDataSnapshot {
 
     private int startRecharge;
-    
+
     private int accessIndex;
 
-    //Parameters for MotoTron
-    private int localBookingId;
+    // Parameters for MotoTron
+    private int  localBookingId;
     private char vehiclePlateCharacter1;
     private char vehiclePlateCharacter2;
     private char vehiclePlateCharacter3;
@@ -21,6 +21,7 @@ public class MotoTronDataSnapshot {
     private char vehiclePlateCharacter11;
     private char vehiclePlateCharacter12;
 
+    private String idOtm;
 
     public int getStartRecharge() {
         return startRecharge;
@@ -138,7 +139,7 @@ public class MotoTronDataSnapshot {
 
     public String getVehiclePlate() {
         if (accessIndex == 1) {
-            StringBuilder sb= new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             sb.append(vehiclePlateCharacter1);
             sb.append(vehiclePlateCharacter2);
             sb.append(vehiclePlateCharacter3);
@@ -152,16 +153,20 @@ public class MotoTronDataSnapshot {
             sb.append(vehiclePlateCharacter11);
             sb.append(vehiclePlateCharacter12);
             return sb.toString();
-        } 
+        }
         return null;
     }
 
-    //    public void setVehiclePlate(String vehiclePlate) {
-    //        this.vehiclePlate = vehiclePlate;
-    //    }
+    public String getIdOtm() {
+        return idOtm;
+    }
+    
+    public void setIdOtm(String idOtm) {
+        this.idOtm = idOtm;
+    }
 
-
-    public MotoTronDataSnapshot() {
+    public MotoTronDataSnapshot(String idOtm) {
+        this.idOtm = idOtm;
         localBookingId = 0;
         accessIndex = 0;
     }

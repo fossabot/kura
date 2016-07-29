@@ -64,12 +64,14 @@ public class CSMessage0x101 {
             sb.append(cm.getCanId());
             s_logger.debug(sb.toString());
 
+            publicCSReceivedData.setFaultFlag(faultFlag);
             publicCSReceivedData.setRechargeAvail(rechargeAvailable);
             publicCSReceivedData.setRechargeInProgress(rechargeInProgress);
             publicCSReceivedData.setPVSystemActive(pvSystemActive);
             publicCSReceivedData.setAuxChargerActive(auxChargerActive);
             publicCSReceivedData.setStorageBatterySts(storageBatteryConcactorSts);
             publicCSReceivedData.setConverterContactorSts(converterConcactorSts);
+            publicCSReceivedData.setFaultString(faultString);
             publicCSReceivedData.setIGBTTemp(igbtTemperature);
             publicCSReceivedData.setStorageBatteryTemp(storageBatteryTemperature);
             publicCSReceivedData.setStorageBatterySOC(storageBatterySOC);

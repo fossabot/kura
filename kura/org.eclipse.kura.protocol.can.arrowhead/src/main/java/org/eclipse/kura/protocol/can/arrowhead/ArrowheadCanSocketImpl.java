@@ -54,6 +54,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private static final String MODALITY_T311    = "t3.1.1";
     private static final String MODALITY_T312    = "t3.1.2";
     private static final String MODALITY_T32     = "t3.2";
+    private static final String ID_OTG           = "arrowhead.t32.idotg";
 
     private static final String PUBLISH_RATE_PROP_NAME = "publish.rate";
 
@@ -65,6 +66,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private Thread               sendThread3;
     private String               ifName;
     private String               chosenModality;
+    private String               idOtg;
 
     private CloudService cloudService;
     private CloudClient  cloudClient;
@@ -81,9 +83,9 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private volatile boolean senderRunning   = true;
     private volatile boolean receiverRunning = true;
 
-    private PublicCSDataSnapshot  publicCSReceivedData  = new PublicCSDataSnapshot();
-    private PrivateCSDataSnapshot privateCSReceivedData = new PrivateCSDataSnapshot();
-    private MotoTronDataSnapshot  motoTronReceivedData  = new MotoTronDataSnapshot();
+    private PublicCSDataSnapshot  publicCSReceivedData;
+    private PrivateCSDataSnapshot privateCSReceivedData;
+    private MotoTronDataSnapshot  motoTronReceivedData;
 
     private Thread publishThread;
     private int    publishRate;
@@ -128,7 +130,12 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             getDelays();
             isBigEndian = (Boolean) classProperties.get(IS_BIG_ENDIAN);
             publishRate = ((Integer) classProperties.get(PUBLISH_RATE_PROP_NAME)) * 1000;
+            idOtg = (String) classProperties.get(ID_OTG);
         }
+
+        publicCSReceivedData = new PublicCSDataSnapshot();
+        privateCSReceivedData = new PrivateCSDataSnapshot();
+        motoTronReceivedData = new MotoTronDataSnapshot(idOtg);
 
         // get the mqtt client for this application
         try {
@@ -178,6 +185,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             getDelays();
             isBigEndian = (Boolean) classProperties.get(IS_BIG_ENDIAN);
             publishRate = ((Integer) classProperties.get(PUBLISH_RATE_PROP_NAME)) * 1000;
+            idOtg = (String) classProperties.get(ID_OTG);
         }
 
         stopListenThread();
@@ -285,7 +293,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         if (MODALITY_T311.equals(chosenModality)) {
             return;
         }
-        
+
         if (sendThread1 != null) {
             sendThread1.interrupt();
             try {
@@ -486,7 +494,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
                 sendMessage0x200();
             }
 
-            if (motoTronReceivedData.getVehiclePlate() != null) {
+            if (MODALITY_T32.equals(chosenModality) && motoTronReceivedData.getVehiclePlate() != null) {
                 sendMessage0x400();
             }
         } catch (Exception e) {
@@ -602,7 +610,6 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             payload.addMetric("I_Out", publicCSReceivedData.getiOut());
             payload.addMetric("Storage_Battery_I ", publicCSReceivedData.getStorageBatteryI());
 
-            publicCSReceivedData.resetData();
         } else if (MODALITY_T311.equals(chosenModality)) {
             // fetch the publishing configuration from the publishing properties
             topic = "privatecsdata";
@@ -635,17 +642,36 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             payload.addMetric("I_Out", privateCSReceivedData.getiOut());
             payload.addMetric("Storage_Battery_I ", privateCSReceivedData.getStorageBatteryI());
 
-            privateCSReceivedData.resetData();
+        } else {
+            // fetch the publishing configuration from the publishing properties
+            topic = "chargeonthego";
+            qos = 0;
+            retain = false;
+
+            // Timestamp the message
+            payload.setTimestamp(new Date());
+            payload.addMetric("ID_OTM", motoTronReceivedData.getIdOtm());
+            payload.addMetric("Fault_flag", publicCSReceivedData.getFaultFlag());
+            payload.addMetric("Recharge_Available", publicCSReceivedData.getRechargeAvailable());
+            payload.addMetric("Recharge_In_Progress", publicCSReceivedData.getRechargeInProgress());
+            payload.addMetric("Fault_string", publicCSReceivedData.getFaultString());
+            if (motoTronReceivedData.getVehiclePlate() != null) {
+                payload.addMetric("Plate_ID", motoTronReceivedData.getVehiclePlate());
+                // recharge time and date
+                payload.addMetric("Energy_Out", publicCSReceivedData.getEnergyOut());
+            }
         }
 
-        if (topic != null) {
-            // Publish the message
-            try {
-                cloudClient.publish(topic, payload, qos, retain);
-                s_logger.info("Published to {} message: {}", topic, payload);
-            } catch (Exception e) {
-                s_logger.error("Cannot publish topic: " + topic, e);
-            }
+        publicCSReceivedData.resetData();
+        privateCSReceivedData.resetData();
+        motoTronReceivedData.resetData();
+
+        // Publish the message
+        try {
+            cloudClient.publish(topic, payload, qos, retain);
+            s_logger.info("Published to {} message: {}", topic, payload);
+        } catch (Exception e) {
+            s_logger.error("Cannot publish topic: " + topic, e);
         }
     }
 }

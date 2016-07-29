@@ -293,6 +293,15 @@ public class CanSocketTest implements ConfigurableComponent {
     }
 
     private void doSendT32() {
+        doSendT312();
+        
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+        }
+        
         try {
             if (m_nextMessageIndex == 0) {
                 sendMessage0x401(m_ifName);
