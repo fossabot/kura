@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
  * <li>Aux_Charger_Active</li>
  * <li>Storage_Battery_Concactor_Sts</li>
  * <li>Converter_Contactor_Sts</li>
+ * <li>Status_of_Storage_Battery_charger</li>
  * <li>Fault string</li>
  * <li>IGBT_Temperature</li>
  * <li>Storage_Battery_Temperature</li>
@@ -41,6 +42,7 @@ public class CSMessage0x101 {
             int auxChargerActive = (b[0] & 0x10) >> 4;
             int storageBatteryConcactorSts = (b[0] & 0x20) >> 5;
             int converterConcactorSts = (b[0] & 0x40) >> 6;
+            int storageBatteryChargerStatus = (b[0] & 0x80) >> 7;
 
             int faultString = b[1];
             int igbtTemperature = b[2];
@@ -54,6 +56,7 @@ public class CSMessage0x101 {
             sb.append("Aux charger active: " + auxChargerActive + ", ");
             sb.append("Storage Battery Concactor Sts: " + storageBatteryConcactorSts + ", ");
             sb.append("Converter Contactor Sts: " + converterConcactorSts + ", ");
+            sb.append("Status of Stroage Battery Charger: " + storageBatteryChargerStatus + ", ");
 
             sb.append("Fault string: " + faultString + ", ");
             sb.append("IGBT Temperature: " + igbtTemperature + " celsius, ");
@@ -71,6 +74,7 @@ public class CSMessage0x101 {
             publicCSReceivedData.setAuxChargerActive(auxChargerActive);
             publicCSReceivedData.setStorageBatterySts(storageBatteryConcactorSts);
             publicCSReceivedData.setConverterContactorSts(converterConcactorSts);
+            publicCSReceivedData.setStorageBatteryChargerStatus(storageBatteryChargerStatus);
             publicCSReceivedData.setFaultString(faultString);
             publicCSReceivedData.setIGBTTemp(igbtTemperature);
             publicCSReceivedData.setStorageBatteryTemp(storageBatteryTemperature);

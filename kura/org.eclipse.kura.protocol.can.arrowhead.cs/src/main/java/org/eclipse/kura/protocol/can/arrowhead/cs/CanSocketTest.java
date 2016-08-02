@@ -421,6 +421,9 @@ public class CanSocketTest implements ConfigurableComponent {
         // Contactor
         // Status
         // [0,1]
+        int storageBatteryChargerStatus = (message0x101Info.isStorageBatteryChargerStatus() << 7); // Storage Battery Charger Status
+        // Storage Battery Charger Status
+        // [0, 1]
 
         int faultString = message0x101Info.getFaultString();
         int igbtTemp = message0x101Info.getIgbtTemp();
@@ -433,7 +436,8 @@ public class CanSocketTest implements ConfigurableComponent {
                 pvSystemActive +
                 auxChargerActive +
                 storageBatteryContractorStatus +
-                converterContractorStatus);
+                converterContractorStatus +
+                storageBatteryChargerStatus);
 
         bMessage[1] = (byte) faultString; // Fault String
         bMessage[2] = (byte) igbtTemp; // IGBT_temp [°C]

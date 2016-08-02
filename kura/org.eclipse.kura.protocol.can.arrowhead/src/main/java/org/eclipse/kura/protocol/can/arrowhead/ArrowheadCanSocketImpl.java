@@ -692,7 +692,8 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             payload.addMetric("IGBT_Temperature", publicCSReceivedData.getIgbtTemp());
             payload.addMetric("Storage_Battery_Temperature", publicCSReceivedData.getStorageBatteryTemp());
             payload.addMetric("Storage_Battery_SOC", publicCSReceivedData.getStorageBatterySOC());
-
+            payload.addMetric("Status_of_Storage_Battery_charger", publicCSReceivedData.getStorageBatteryChargerStatus());
+            
             payload.addMetric("V_Out ", publicCSReceivedData.getvOut());
             payload.addMetric("Storage_Battery_V", publicCSReceivedData.getStorageBatteryV());
             payload.addMetric("PV_System_V", publicCSReceivedData.getPvSystemV());

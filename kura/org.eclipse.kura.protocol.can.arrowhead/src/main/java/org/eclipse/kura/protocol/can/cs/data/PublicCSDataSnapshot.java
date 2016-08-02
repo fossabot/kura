@@ -17,6 +17,7 @@ public class PublicCSDataSnapshot {
     private int auxChargerActive;
     private int storageBatterySts;
     private int converterContactorSts;
+    private int storageBatteryChargerStatus;
     private int faultString;
     private int igbtTemp;
     private int storageBatteryTemp;
@@ -43,6 +44,7 @@ public class PublicCSDataSnapshot {
         auxChargerActive = 0;
         storageBatterySts = 0;
         converterContactorSts = 0;
+        storageBatteryChargerStatus = 0;
         faultString = 0;
         igbtTemp = 0;
         storageBatteryTemp = 0;
@@ -68,6 +70,7 @@ public class PublicCSDataSnapshot {
         auxChargerActive = 0;
         storageBatterySts = 0;
         converterContactorSts = 0;
+        storageBatteryChargerStatus = 0;
         faultString = 0;
         igbtTemp = 0;
         storageBatteryTemp = 0;
@@ -133,6 +136,10 @@ public class PublicCSDataSnapshot {
 
     public void setConverterContactorSts(int converterContactorSts) {
         this.converterContactorSts = converterContactorSts;
+    }
+    
+    public void setStorageBatteryChargerStatus(int storageBatteryChargerStatus) {
+    	this.storageBatteryChargerStatus = storageBatteryChargerStatus;
     }
     
     public void setFaultString(int faultString) {
@@ -217,6 +224,10 @@ public class PublicCSDataSnapshot {
 
     public int getConverterContactorSts() {
         return converterContactorSts;
+    }
+    
+    public int getStorageBatteryChargerStatus() {
+    	return storageBatteryChargerStatus;
     }
 
     public int getFaultString() {
