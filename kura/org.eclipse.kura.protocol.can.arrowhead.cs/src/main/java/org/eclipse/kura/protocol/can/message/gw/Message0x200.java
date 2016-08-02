@@ -18,7 +18,7 @@ public class Message0x200 {
             int solarIrradiation = (b[0] & 0x0C) >> 2; // Next Day Solar
                                                        // Radiation Level
                                                        // [0-Low; 1-Medium;
-                                                       // 2-High]
+                                                       // 2-High; 3-Service Not Available]
             int csReset = (b[0] & 0x10) >> 4; // Charging station reset
                                               // [0-No;1-Yes]
 
