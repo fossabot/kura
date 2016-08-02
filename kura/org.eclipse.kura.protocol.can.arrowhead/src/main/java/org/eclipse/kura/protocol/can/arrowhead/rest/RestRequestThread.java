@@ -14,16 +14,19 @@ import javax.json.JsonReader;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RestRequestThread extends Thread {
 
 	private LinkedList<Request> requestQueue = new LinkedList<Request>();
-	private HttpClient httpClient;
+	private CloseableHttpClient httpClient;
 	private Logger logger;
 
 	private class HttpGetWithBody extends HttpEntityEnclosingRequestBase {
@@ -52,21 +55,23 @@ public class RestRequestThread extends Thread {
 	@Override
 	public void run() {
 
-		synchronized (this) {
+		Request req = null;
 
-			while (requestQueue.size() == 0)
-				try {
-					this.wait();
-				} catch (InterruptedException e) {
-					logger.info("interrupted, exiting...");
-					return;
-				}
+		while (!this.isInterrupted()) {
 
+			synchronized (this) {
+				while (requestQueue.size() == 0)
+					try {
+						this.wait();
+					} catch (InterruptedException e) {
+						logger.info("interrupted, exiting...");
+						return;
+					}
+				logger.info("Executing request"); // TODO remove me
+				req = requestQueue.poll();
+			}
 			
-			logger.info("Executing request"); // TODO remove me
-			Request req = requestQueue.poll();
 			int responseStatus = -1;
-			
 			JsonObject data = null;
 			try {
 
@@ -88,20 +93,23 @@ public class RestRequestThread extends Thread {
 					get.setEntity(entity);
 				}
 
-				HttpResponse response = httpClient.execute(get);
-				logger.info("got response"); // TODO remove me 
-				
+				CloseableHttpResponse response = httpClient.execute(get);
+				logger.info("got response"); // TODO remove me
+
 				responseStatus = response.getStatusLine().getStatusCode();
 				HttpEntity e = response.getEntity();
-				
+
 				if (e != null && e.getContentType().getValue().equals("application/json")) {
 					logger.info("got payload");
 					JsonReader reader = Json.createReader(e.getContent());
 					data = reader.readObject();
 					logger.info("" + data); // TODO remove me
 					reader.close();
+					EntityUtils.consume(e);
 				}
-				
+
+				response.close();
+
 			} catch (IOException e) {
 				logger.error(e + " " + e.getMessage());
 			} finally {
@@ -109,13 +117,15 @@ public class RestRequestThread extends Thread {
 					req.listener.onCompleted(responseStatus, data);
 			}
 		}
+		logger.info("REST request thread interrupted, exiting");
 	}
 
-	public synchronized void runRequest(String uri, String method, Map<String, String> body, RequestCompletionListener listener) {
+	public synchronized void runRequest(String uri, String method, Map<String, String> body,
+			RequestCompletionListener listener) {
 		this.requestQueue.add(new Request(uri, method, body, listener));
 		this.notify();
 	}
-	
+
 	public class Request {
 
 		private String uri;
@@ -146,5 +156,4 @@ public class RestRequestThread extends Thread {
 			return listener;
 		}
 	}
-
 }

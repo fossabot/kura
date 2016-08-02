@@ -62,6 +62,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private static final String MODALITY_T312 = "t3.1.2";
     private static final String MODALITY_T32  = "t3.2";
     private static final String ID_OTG        = "arrowhead.t32.idotg";
+    private static final String EVSE_ID       = "arrowhead.evse.id";
 
     private static final String PUBLISH_RATE_PROP_NAME = "publish.rate";
     private static final String CONTROL_TOPIC_NAME     = "control";
@@ -75,7 +76,8 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private String               ifName;
     private String               chosenModality;
     private String               idOtg;
-
+    private String				 EVSEid;
+    
     private CloudService cloudService;
     private CloudClient  cloudClient;
 
@@ -122,14 +124,22 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         this.cloudService = null;
     }
 
-    protected void startRechargeT312() {
-        // TODO send start recharge frame
+    protected void setStartRechargeFlag(int value) {
+        this.rechargeInfo.setStartRecharge(value);
     }
 
-    protected void stopRechargeT312() {
-        // TODO send stop recharge frame
+    protected String getEVSEId() {
+    	return EVSEid;
     }
-
+    
+    protected void setBookingTime(int day, int month, int year, int hour, int minutes) {
+    	bookingInfo.setBookingDateDay(day);
+    	bookingInfo.setBookingDateMonth(month);
+    	bookingInfo.setBookingDateYear(year);
+    	bookingInfo.setCurrentTimeHour(hour);
+    	bookingInfo.setCurrentTimeMinute(minutes);
+    }
+    
     private void subscribeToControlTopic() throws KuraException {
         if (cloudClient.isConnected())
             cloudClient.subscribe(CONTROL_TOPIC_NAME, 0);
@@ -145,6 +155,8 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         public void onMotoTronCSMessage(int code, MotoTronDataSnapshot snapshot);
 
         public void onControlMessage(ControlMessage message);
+        
+        public void onShutdown();
 
     }
 
@@ -167,6 +179,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             isBigEndian = (Boolean) classProperties.get(IS_BIG_ENDIAN);
             publishRate = ((Integer) classProperties.get(PUBLISH_RATE_PROP_NAME)) * 1000;
             idOtg = (String) classProperties.get(ID_OTG);
+            EVSEid = (String) classProperties.get(EVSE_ID);
         }
 
         publicCSReceivedData = new PublicCSDataSnapshot();
@@ -209,6 +222,10 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         // Releasing the CloudApplicationClient
         s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
         cloudClient.release();
+        
+        if (applicationLogic != null) {
+        	applicationLogic.onShutdown();
+        }
     }
 
     public void updated(Map<String, Object> properties) {
@@ -230,6 +247,8 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             isBigEndian = (Boolean) classProperties.get(IS_BIG_ENDIAN);
             publishRate = ((Integer) classProperties.get(PUBLISH_RATE_PROP_NAME)) * 1000;
             idOtg = (String) classProperties.get(ID_OTG);
+            
+            EVSEid = (String) classProperties.get(EVSE_ID);
         }
 
         stopListenThread();

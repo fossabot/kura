@@ -63,7 +63,7 @@ public class ArrowheadRestClient {
 		}
 	}
 	
-	enum RechargeStatus {RECHARGE_STARTED, RECHARGE_STOPPED};
+	public enum RechargeStatus {RECHARGE_STARTED, RECHARGE_STOPPED};
 	
 	public void notifyRechargeStateChange(String evseId, RechargeStatus newStatus, String reservationId, ArrowheadRestResponseListener<EVSEStatusResponse> listener) {
 		try {
@@ -85,7 +85,7 @@ public class ArrowheadRestClient {
 		this.requestThread.interrupt();
 	}
 	
-	private interface ArrowheadRestResponseListener<T> {
+	public interface ArrowheadRestResponseListener<T> {
 		public void onResponse(T data);
 	}
 	
