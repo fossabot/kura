@@ -21,6 +21,14 @@
             default="can0"
             description="CAN socket Name."/>
             
+        <AD id="arrowhead.evse.id"
+            name="arrowhead.evse.id"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="EVSE_Bologna"
+            description="EVSE id"/>
+            
        <AD id="arrowhead.modality"
             name="arrowhead.modality"
             type="String"
@@ -110,7 +118,7 @@
             type="String"
             cardinality="0" 
             required="true"
-            default="3" 
+            default="0" 
             min = "0"
             max = "3"
             description="ID 0x200: Next day Solar Irradiation Level [0-Low; 1-Medium; 2-High; 3-Service not available]"/>
