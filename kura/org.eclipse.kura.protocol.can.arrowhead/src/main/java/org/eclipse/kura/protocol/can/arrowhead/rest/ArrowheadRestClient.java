@@ -1,0 +1,154 @@
+package org.eclipse.kura.protocol.can.arrowhead.rest;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.json.JsonObject;
+
+public class ArrowheadRestClient {
+
+	private RestRequestThread requestThread;
+	private String baseUri;
+	
+	public ArrowheadRestClient(String baseUri) {
+		this.baseUri = baseUri;
+		this.requestThread = new RestRequestThread();
+	}
+	
+	public void getEVSEStatus(String evseId, RestResponseListener<EVSEGetStatusResponse> listener) {
+		try {
+			requestThread.runRequest(this.baseUri + "/evses/" + URLEncoder.encode(evseId, Charset.defaultCharset().name()),
+					"GET", 
+					null,
+					(int status, JsonObject object) -> {
+						if (status / 100 != 2 || object == null) {
+							listener.onResponse(null);
+							return;
+						}
+						listener.onResponse(new EVSEGetStatusResponse(object));
+					});
+		} catch (UnsupportedEncodingException e) {
+			// ignore
+		}
+	}
+	
+	public void requestRechargeAuthorization(String evseId, String userId, int toleranceMs, RestResponseListener<EVSEStatusResponse> listener) {
+		try {
+			Map<String, String> params = new HashMap<String, String>();
+			params.put("user_id", userId);
+			params.put("tolerance", toleranceMs + "");
+			
+			requestThread.runRequest(this.baseUri + "/evses/" + URLEncoder.encode(evseId, Charset.defaultCharset().name()) + "/check",
+					"GET", 
+					params,
+					(int status, JsonObject object) -> {
+						if (status / 100 != 2 || object == null) {
+							listener.onResponse(null);
+							return;
+						}
+						listener.onResponse(new EVSEStatusResponse(object));
+					});
+		} catch (UnsupportedEncodingException e) {
+			// ignore
+		}
+	}
+	
+	public void requestOTFRechargeAuthorization(String evseId, String userId, RestResponseListener<EVSEStatusResponse> listener) {
+		try {
+			Map<String, String> params = new HashMap<String, String>();
+			params.put("user_id", userId);
+			
+			requestThread.runRequest(this.baseUri + "/evses/" + URLEncoder.encode(evseId, Charset.defaultCharset().name()) + "/treservations/onthefly",
+					"GET", 
+					params,
+					(int status, JsonObject object) -> {
+						if (status / 100 != 2 || object == null) {
+							listener.onResponse(null);
+							return;
+						}
+						listener.onResponse(new EVSEStatusResponse(object));
+					});
+		} catch (UnsupportedEncodingException e) {
+			// ignore
+		}
+	}
+	
+	enum RechargeStatus {RECHARGE_STARTED, RECHARGE_STOPPED};
+	
+	public void notifyRechargeStateChange(String evseId, RechargeStatus newStatus, String reservationId, RestResponseListener<EVSEStatusResponse> listener) {
+		try {
+			Map<String, String> params = new HashMap<String, String>();
+			params.put("status", (newStatus == RechargeStatus.RECHARGE_STARTED ? "start" : "stop"));
+			params.put("reservation", reservationId);
+			
+			requestThread.runRequest(this.baseUri + "/evses/" + URLEncoder.encode(evseId, Charset.defaultCharset().name()),
+					"PUT", 
+					params,
+					(int status, JsonObject object) -> {
+						if (status / 100 != 2 || object == null) {
+							listener.onResponse(null);
+							return;
+						}
+						listener.onResponse(new EVSEStatusResponse(object));
+					});
+		} catch (UnsupportedEncodingException e) {
+			// ignore
+		}
+	}
+	
+	public void close() {
+		this.requestThread.interrupt();
+	}
+	
+	public interface RestResponseListener<T> {
+		public void onResponse(T response);
+	}
+	
+	public class EVSEGetStatusResponse {
+		private boolean isReservedNow = false;
+		private long nextReservationIn = -1;
+		private String nextUser;
+		
+		private EVSEGetStatusResponse(JsonObject object) {
+			
+			if (!object.isNull("isReservedNow"))
+				this.isReservedNow = object.getBoolean("isReservedNow");
+			
+			if (!object.isNull("nextUser"))
+				this.nextUser = object.getString("nextUser");
+			
+			if (!object.isNull("nextReservationIn"))
+				nextReservationIn = object.getJsonNumber("nextReservationIn").bigIntegerValue().longValue();
+			
+		}
+		
+		public boolean isReservedNow() {
+			return isReservedNow;
+		}
+		
+		public long getNextReservationMs() {
+			return nextReservationIn;
+		}
+		
+		public String getNextUser() {
+			return nextUser;
+		}
+	}
+	
+	public class EVSEStatusResponse {
+		
+		private boolean status;
+		
+		public EVSEStatusResponse(JsonObject object) {
+			if (!object.isNull("status"))
+				this.status = object.getBoolean("status");
+		}
+		
+		public boolean getStatus() {
+			return status;
+		}
+	}
+}

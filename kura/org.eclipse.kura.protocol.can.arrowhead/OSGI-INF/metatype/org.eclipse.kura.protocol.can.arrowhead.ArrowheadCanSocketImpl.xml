@@ -26,7 +26,7 @@
             type="String"
             cardinality="0" 
             required="true"
-            default="t3.1.1"
+            default="t3.1.2"
             description="Specify modality">
            <Option label="t3.1.1" value="t3.1.1"/>
            <Option label="t3.1.2" value="t3.1.2"/>          

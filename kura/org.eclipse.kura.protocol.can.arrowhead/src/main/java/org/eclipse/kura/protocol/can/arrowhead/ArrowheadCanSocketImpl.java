@@ -16,6 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.eclipse.kura.message.KuraPayload;
 import org.eclipse.kura.protocol.can.CanConnectionService;
 import org.eclipse.kura.protocol.can.CanMessage;
+import org.eclipse.kura.protocol.can.arrowhead.control.ControlMessage;
+import org.eclipse.kura.protocol.can.arrowhead.control.ControlMessage.InvalidControlMessageException;
+import org.eclipse.kura.protocol.can.arrowhead.control.ControlMessageCodes;
+import org.eclipse.kura.protocol.can.arrowhead.control.T312RechargeRequestMessage;
 import org.eclipse.kura.protocol.can.cs.data.MotoTronDataSnapshot;
 import org.eclipse.kura.protocol.can.cs.data.PrivateCSDataSnapshot;
 import org.eclipse.kura.protocol.can.cs.data.PublicCSDataSnapshot;
@@ -57,6 +61,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private static final String ID_OTG           = "arrowhead.t32.idotg";
 
     private static final String PUBLISH_RATE_PROP_NAME = "publish.rate";
+    private static final String CONTROL_TOPIC_NAME = "control";
 
     private CanConnectionService canConnection;
     private Map<String, Object>  classProperties;
@@ -89,6 +94,8 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
     private Thread publishThread;
     private int    publishRate;
+    
+    private ApplicationLogic applicationLogic;
 
     // ----------------------------------------------------------------
     //
@@ -112,6 +119,29 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         this.cloudService = null;
     }
 
+    protected void startRechargeT312() {
+    	// TODO send start recharge frame
+    }
+    	
+    protected void stopRechargeT312() {
+    	// TODO send stop recharge frame
+    }
+    
+    private void subscribeToControlTopic() throws KuraException {
+    	if (cloudClient.isConnected())
+    		cloudClient.subscribe(CONTROL_TOPIC_NAME, 0);
+    	s_logger.info("subscribed to control topic");
+    }
+    
+    protected interface ApplicationLogic {
+    	
+    	public void onPrivateCSMessage(int code, PrivateCSDataSnapshot data);
+    	public void onPublicCSMessage(int code, PublicCSDataSnapshot snapshot);
+    	public void onMotoTronCSMessage(int code, MotoTronDataSnapshot snapshot);
+    	public void onControlMessage(ControlMessage message);
+    	
+    }
+    
     public void activate(ComponentContext componentContext, Map<String, Object> properties) {
         classProperties = properties;
         s_logger.info("activating Minigateway can test");
@@ -144,11 +174,19 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             s_logger.info("Getting CloudClient for {}...", APP_ID);
             cloudClient = cloudService.newCloudClient(APP_ID);
             cloudClient.addCloudClientListener(this);
+            subscribeToControlTopic();
         } catch (Exception e) {
             s_logger.error("Error during component activation", e);
             throw new ComponentException(e);
         }
 
+        try {
+        	if (chosenModality.equals(MODALITY_T312))
+        		this.applicationLogic = new T312ApplicationLogic(this);
+        } catch (KuraException e) {
+        	s_logger.error("Failed to instantiate application logic: " + e.getMessage());
+        }
+        
         // start threads
         startListeningThread();
         startSendThreads();
@@ -232,6 +270,19 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             } else if (canId == 0x402) {
                 CSMessage0x402.parseCanMessage(cm, motoTronReceivedData);
             }
+            
+            if (applicationLogic == null)
+            	return;
+            
+            int msgType = canId & 0xf00;
+            
+            if (msgType == 0x100)
+            	applicationLogic.onPublicCSMessage(canId, publicCSReceivedData);
+            else if (msgType == 0x300)
+            	applicationLogic.onPrivateCSMessage(canId, privateCSReceivedData);
+            else if (msgType == 0x400)
+            	applicationLogic.onMotoTronCSMessage(canId, motoTronReceivedData);
+            
         } else {
             s_logger.warn("receive=null");
         }
@@ -252,17 +303,43 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     @Override
     public void onMessageArrived(String deviceId, String appTopic,
             KuraPayload msg, int qos, boolean retain) {
-        return;
+     
+    	s_logger.info("control message received on topic: " + appTopic);
+    	
+    	if (!appTopic.equals(CONTROL_TOPIC_NAME)) return;
+    	
+    	try {
+    		
+    		int messageType = (Integer) msg.getMetric(ControlMessageCodes.MESSAGE_TYPE_METRIC_NAME);
+    		
+    		if ((messageType & ControlMessageCodes.T312_RECHARGE_REQUEST_MASK) != 0) {
+    			T312RechargeRequestMessage message = new T312RechargeRequestMessage(messageType, msg);
+    			if (applicationLogic != null)
+    				applicationLogic.onControlMessage(message);
+    		}
+    		
+    	} catch (Exception | InvalidControlMessageException e) {
+    		s_logger.info("Received invalid control message, " + e.getMessage());
+    		s_logger.info(msg.toString());
+    	} 
     }
 
     @Override
     public void onConnectionLost() {
-        return;
+    	try {
+			cloudClient.unsubscribe(CONTROL_TOPIC_NAME);
+		} catch (KuraException e) {
+			s_logger.info("failed to unsubscribe to control topic");
+		}
     }
 
     @Override
     public void onConnectionEstablished() {
-        return;
+    	try {
+    	cloudClient.subscribe(CONTROL_TOPIC_NAME, 0);
+    	} catch(KuraException e) {
+    		s_logger.error("Failed to subscribe to control topic");
+    	}
     }
 
     @Override
