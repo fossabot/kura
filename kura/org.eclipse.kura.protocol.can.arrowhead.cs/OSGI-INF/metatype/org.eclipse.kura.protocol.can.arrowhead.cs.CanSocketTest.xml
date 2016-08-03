@@ -24,6 +24,14 @@
            <Option label="t3.2" value="t3.2"/>          
         </AD>
             
+        <AD id="arrowhead.recharge.duration"
+            name="arrowhead.recharge.duration"
+            type="Long"
+            cardinality="0"
+            required="true"
+            default="20000"
+            description="Specify the duration in milliseconds of the simulated recharges."/>
+            
        <AD id="can.bigendian"
             name="can.bigendian"
             type="Boolean"

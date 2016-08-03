@@ -63,7 +63,7 @@
             type="String"
             cardinality="0"
             required="true"
-            default="1000"
+            default="100"
             min = "0"
             description="id= 0x200 message frequency [milliseconds]."/>
       
@@ -72,7 +72,7 @@
             type="String"
             cardinality="0"
             required="true"
-            default="1000"
+            default="100"
             min = "0"
             description="id= 0x201 message frequency [milliseconds]."/>
             
@@ -81,7 +81,7 @@
             type="String"
             cardinality="0"
             required="true"
-            default="1000"
+            default="100"
             min = "0"
             description="id= 0x202 message frequency [milliseconds]."/>
        

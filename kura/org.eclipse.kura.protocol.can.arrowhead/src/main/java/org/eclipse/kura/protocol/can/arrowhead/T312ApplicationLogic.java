@@ -33,7 +33,7 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 																	// configurable
 
 	private ArrowheadCanSocketImpl impl;
-	private ArrowheadRestClient restClient = new ArrowheadRestClient(BASE_URI);
+	// private ArrowheadRestClient restClient = new ArrowheadRestClient(BASE_URI);
 	private Logger logger = LoggerFactory.getLogger(T312ApplicationLogic.class);
 
 	enum RechargeState {
@@ -52,21 +52,21 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 
 	// TODO implement timers for resetting the CS if it takes too long for it to
 	// change state
-	// TODO handle failures of REST requests to notify recharge start/stop
+	// TODO handle failures of REST requests used to notify recharge start/stop
 
 	public T312ApplicationLogic(ArrowheadCanSocketImpl impl) throws KuraException {
 		this.impl = impl;
 		rechargeState = RechargeState.IDLE;
-		this.bookingServicePollThread = new BookingServicePollThread();
-		this.bookingServicePollThread.start();
+		//this.bookingServicePollThread = new BookingServicePollThread();
+		//this.bookingServicePollThread.start();
 	}
 	
 	private void setRechargeState(RechargeState newState) {
-		logger.info("Status change: " + rechargeState + " -> " + newState);
+		logger.info("State change: " + rechargeState + " -> " + newState);
 		this.rechargeState = newState;
 	}
 	
-	private void requestStateChange(RechargeState targetStatus) {
+	private synchronized void performStateChange(RechargeState targetStatus) {
 		switch (rechargeState) {
 		case IDLE:
 			if (targetStatus == RechargeState.RECHARGE_STARTING || targetStatus == RechargeState.RECHARGE_IN_PROGRESS) {
@@ -91,7 +91,8 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 		}
 	}
 
-	private void on0x101FrameReceived(PublicCSDataSnapshot snapshot) {
+	private synchronized void on0x101FrameReceived(PublicCSDataSnapshot snapshot) {
+		
 		boolean isRechargeInProgress = snapshot.getRechargeInProgress() == 1;
 
 		switch (rechargeState) {
@@ -137,7 +138,7 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 							c.get(Calendar.MINUTE));
 	}
 	
-	private class BookingServicePollThread extends Thread {
+	/*private class BookingServicePollThread extends Thread {
 
 		@Override
 		public void run() {
@@ -169,7 +170,7 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 			}
 			logger.info("BookingServicePollThread exiting..");
 		}
-	}
+	}*/
 
 	private class TestResponseListener
 			implements ArrowheadRestResponseListener<ArrowheadRestClient.EVSEStatusResponse> {
@@ -200,12 +201,12 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 
 	private void notifyRechargeStartedToBookingService() {
 		//this.restClient.notifyRechargeStateChange(impl.getEVSEId(), ArrowheadRestClient.RechargeStatus.RECHARGE_STARTED,
-		//		"null", testResponseListener);
+		//		impl.getEVSEId(), testResponseListener);
 	}
 
 	private void notifyRechargeStoppedToBookingService() {
 		//this.restClient.notifyRechargeStateChange(impl.getEVSEId(), ArrowheadRestClient.RechargeStatus.RECHARGE_STOPPED,
-		//		"null", testResponseListener);
+		//		impl.getEVSEId(), testResponseListener);
 	}
 
 	@Override
@@ -238,15 +239,15 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 		T312RechargeRequestMessage rechargeRequest = (T312RechargeRequestMessage) message;
 
 		if (rechargeRequest.getMessageType() == ControlMessageCodes.T312_START_RECHARGE) {
-			this.requestStateChange(RechargeState.RECHARGE_IN_PROGRESS);
+			this.performStateChange(RechargeState.RECHARGE_IN_PROGRESS);
 		} else {
-			this.requestStateChange(RechargeState.IDLE);
+			this.performStateChange(RechargeState.RECHARGE_STOPPING);
 		}
 	}
 
 	@Override
 	public void onShutdown() {
-		this.restClient.close();
+		// this.restClient.close();
 		try {
 			this.bookingServicePollThread.interrupt();
 			this.bookingServicePollThread.join();
