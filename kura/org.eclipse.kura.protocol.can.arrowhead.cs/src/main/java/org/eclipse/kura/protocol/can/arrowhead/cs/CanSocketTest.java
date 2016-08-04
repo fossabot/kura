@@ -1,6 +1,7 @@
 package org.eclipse.kura.protocol.can.arrowhead.cs;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 
 import org.eclipse.kura.KuraException;
@@ -244,7 +245,7 @@ public class CanSocketTest implements ConfigurableComponent {
 
 		if (cm != null) {
 			int canId = cm.getCanId();
-			s_logger.info("Received can message with Id: 0x" + Integer.toHexString(canId));
+			// s_logger.info("Received can message with Id: 0x" + Integer.toHexString(canId));
 
 			if (canId == 0x200) {
 				Message0x200.parseGwCanMessage(cm, controlStatus);
@@ -303,6 +304,7 @@ public class CanSocketTest implements ConfigurableComponent {
 	private void doSendT311() {
 		try {
 			if (counter != 0) {
+				rechargeSimulationThread.updateRechargeEndTime();
 				sendMessage0x300(m_ifName);
 			} else {
 				if (m_nextMessageIndex == 0) {
@@ -340,9 +342,12 @@ public class CanSocketTest implements ConfigurableComponent {
 		counter = counter % 10;*/
 		
 		try {
+		rechargeSimulationThread.updateRechargeEndTime();
 		sendMessage0x100(m_ifName);
+		
 		Thread.sleep(20);
 		sendMessage0x101(m_ifName);
+		
 		Thread.sleep(20);
 		sendMessage0x102(m_ifName);
 		} catch (IOException e) {
@@ -902,6 +907,7 @@ public class CanSocketTest implements ConfigurableComponent {
 
 		private boolean run = true;
 		private boolean rechargeRequested = false;
+		private Date rechargeEndDate;
 		
 		@Override
 		public void run() {
@@ -915,8 +921,11 @@ public class CanSocketTest implements ConfigurableComponent {
 							
 						message0x101Info.setRechargeInProgress(1);
 						setRechargeState(RechargeState.RECHARGE_IN_PROGRESS);
+						rechargeEndDate = new Date(System.currentTimeMillis() + rechargeDuration);
 						
 						Thread.sleep(rechargeDuration);
+						
+						rechargeEndDate = null;
 						message0x101Info.setRechargeInProgress(0);
 						setRechargeState(RechargeState.WAITING_ACK);
 						
@@ -928,6 +937,28 @@ public class CanSocketTest implements ConfigurableComponent {
 			}
 		}
 
+		private void setRechargeEndTime(long remainingSeconds) {
+			remainingSeconds = Math.max(0, remainingSeconds);
+			if (modality.equals(MODALITY_T312)) {
+				message0x100Info.setTimeToRechargeSeconds((int) (remainingSeconds % 60));
+				message0x100Info.setTimeToRechargeMinutes((int) (remainingSeconds / 60));
+			} else if (modality.equals(MODALITY_T311)) {
+				long remainingMinutes = remainingSeconds / 60;
+				message0x300Info.setTimeToRechargeMinutes((int) (remainingMinutes % 60));
+				message0x300Info.setTimeToRechargeHours((int) (remainingMinutes / 60));
+			}
+		}
+		
+		public void updateRechargeEndTime() {
+			if (rechargeEndDate == null || rechargeEndDate.getTime() <= System.currentTimeMillis()) {
+				setRechargeEndTime(0);
+				return;
+			}
+			
+			long remainingSeconds = (rechargeEndDate.getTime() - new Date().getTime()) / 1000;
+			setRechargeEndTime(remainingSeconds);
+		}
+		
 		public void stopRecharge() {
 			s_logger.info("aborting recharge");
 			this.interrupt();

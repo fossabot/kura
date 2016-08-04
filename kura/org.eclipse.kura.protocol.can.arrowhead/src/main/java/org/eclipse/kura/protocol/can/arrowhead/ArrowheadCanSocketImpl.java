@@ -1,7 +1,9 @@
 package org.eclipse.kura.protocol.can.arrowhead;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Map;
 
 import org.eclipse.kura.KuraException;
@@ -138,6 +140,17 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     	bookingInfo.setBookingDateYear(year);
     	bookingInfo.setCurrentTimeHour(hour);
     	bookingInfo.setCurrentTimeMinute(minutes);
+    }
+    
+    protected void updateCurrentDateTime() {
+    	Date nextBookingDate = new Date();
+		GregorianCalendar c = new GregorianCalendar();
+		c.setTime(nextBookingDate);
+		currentDateInfo.setCurrentDateDay(c.get(Calendar.DAY_OF_MONTH));
+		currentDateInfo.setCurrentDateMonth(c.get(Calendar.MONTH));
+		currentDateInfo.setCurrentDateYear(c.get(Calendar.YEAR));
+		bookingInfo.setCurrentTimeMinute(c.get(Calendar.MINUTE));
+		bookingInfo.setCurrentTimeHour(c.get(Calendar.HOUR_OF_DAY));
     }
     
     private void subscribeToControlTopic() throws KuraException {
@@ -278,7 +291,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
         if (cm != null) {
             int canId = cm.getCanId();
-             s_logger.info("Received can message with Id: 0x" + Integer.toHexString(canId));
+             // s_logger.info("Received can message with Id: 0x" + Integer.toHexString(canId));
 
             if (applicationLogic == null) {
                 return;
@@ -615,6 +628,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private void doSend2Test() {
         try {
             if (MODALITY_T312.equals(chosenModality) || MODALITY_T32.equals(chosenModality)) {
+            	updateCurrentDateTime();
                 sendMessage0x201();
             }
         } catch (Exception e) {
@@ -625,6 +639,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private void doSend3Test() {
         try {
             if (MODALITY_T312.equals(chosenModality) || MODALITY_T32.equals(chosenModality)) {
+            	updateCurrentDateTime();
                 sendMessage0x202();
             }
         } catch (Exception e) {
