@@ -13,20 +13,16 @@ import javax.json.JsonReader;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import org.apache.http.impl.client.DefaultHttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RestRequestThread extends Thread {
 
 	private LinkedList<Request> requestQueue = new LinkedList<Request>();
-	private CloseableHttpClient httpClient;
+	private DefaultHttpClient httpClient;
 	private Logger logger;
 
 	private class HttpGetWithBody extends HttpEntityEnclosingRequestBase {
@@ -44,7 +40,7 @@ public class RestRequestThread extends Thread {
 
 	public RestRequestThread() {
 		logger = LoggerFactory.getLogger("ArrowheadRestRequestThread");
-		httpClient = HttpClients.createDefault();
+		httpClient = new DefaultHttpClient();
 		this.start();
 	}
 
@@ -93,7 +89,7 @@ public class RestRequestThread extends Thread {
 					get.setEntity(entity);
 				}
 
-				CloseableHttpResponse response = httpClient.execute(get);
+				HttpResponse response = httpClient.execute(get);
 				logger.info("got response"); // TODO remove me
 
 				responseStatus = response.getStatusLine().getStatusCode();
@@ -105,10 +101,9 @@ public class RestRequestThread extends Thread {
 					data = reader.readObject();
 					logger.info("" + data); // TODO remove me
 					reader.close();
-					EntityUtils.consume(e);
+					e.consumeContent();
 				}
 
-				response.close();
 
 			} catch (IOException e) {
 				logger.error(e + " " + e.getMessage());

@@ -33,7 +33,7 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 																	// configurable
 
 	private ArrowheadCanSocketImpl impl;
-	// private ArrowheadRestClient restClient = new ArrowheadRestClient(BASE_URI);
+	private ArrowheadRestClient restClient = new ArrowheadRestClient(BASE_URI);
 	private Logger logger = LoggerFactory.getLogger(T312ApplicationLogic.class);
 
 	enum RechargeState {
@@ -57,8 +57,8 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 	public T312ApplicationLogic(ArrowheadCanSocketImpl impl) throws KuraException {
 		this.impl = impl;
 		rechargeState = RechargeState.IDLE;
-		//this.bookingServicePollThread = new BookingServicePollThread();
-		//this.bookingServicePollThread.start();
+		this.bookingServicePollThread = new BookingServicePollThread();
+		this.bookingServicePollThread.start();
 	}
 	
 	private void setRechargeState(RechargeState newState) {
@@ -138,7 +138,7 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 							c.get(Calendar.MINUTE));
 	}
 	
-	/*private class BookingServicePollThread extends Thread {
+	private class BookingServicePollThread extends Thread {
 
 		@Override
 		public void run() {
@@ -170,7 +170,7 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 			}
 			logger.info("BookingServicePollThread exiting..");
 		}
-	}*/
+	}
 
 	private class TestResponseListener
 			implements ArrowheadRestResponseListener<ArrowheadRestClient.EVSEStatusResponse> {
@@ -200,13 +200,13 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 																							// responses
 
 	private void notifyRechargeStartedToBookingService() {
-		//this.restClient.notifyRechargeStateChange(impl.getEVSEId(), ArrowheadRestClient.RechargeStatus.RECHARGE_STARTED,
-		//		impl.getEVSEId(), testResponseListener);
+		this.restClient.notifyRechargeStateChange(impl.getEVSEId(), ArrowheadRestClient.RechargeStatus.RECHARGE_STARTED,
+				impl.getEVSEId(), testResponseListener);
 	}
 
 	private void notifyRechargeStoppedToBookingService() {
-		//this.restClient.notifyRechargeStateChange(impl.getEVSEId(), ArrowheadRestClient.RechargeStatus.RECHARGE_STOPPED,
-		//		impl.getEVSEId(), testResponseListener);
+		this.restClient.notifyRechargeStateChange(impl.getEVSEId(), ArrowheadRestClient.RechargeStatus.RECHARGE_STOPPED,
+				impl.getEVSEId(), testResponseListener);
 	}
 
 	@Override
@@ -247,7 +247,7 @@ public class T312ApplicationLogic implements ArrowheadCanSocketImpl.ApplicationL
 
 	@Override
 	public void onShutdown() {
-		// this.restClient.close();
+		this.restClient.close();
 		try {
 			this.bookingServicePollThread.interrupt();
 			this.bookingServicePollThread.join();
