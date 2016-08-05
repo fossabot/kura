@@ -142,6 +142,10 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     	bookingInfo.setCurrentTimeMinute(minutes);
     }
     
+    protected void setRechargeIsBooked(boolean rechargeIsBooked) {
+    	rechargeInfo.setRechargeBooked((rechargeIsBooked) ? 1 : 0);
+    }
+    
     protected void updateCurrentDateTime() {
     	Date nextBookingDate = new Date();
 		GregorianCalendar c = new GregorianCalendar();
@@ -728,7 +732,6 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             payload.addMetric("IGBT_Temperature", publicCSReceivedData.getIgbtTemp());
             payload.addMetric("Storage_Battery_Temperature", publicCSReceivedData.getStorageBatteryTemp());
             payload.addMetric("Storage_Battery_SOC", publicCSReceivedData.getStorageBatterySOC());
-            payload.addMetric("Status_of_Storage_Battery_charger", publicCSReceivedData.getStorageBatteryChargerStatus());
             
             payload.addMetric("V_Out ", publicCSReceivedData.getvOut());
             payload.addMetric("Storage_Battery_V", publicCSReceivedData.getStorageBatteryV());
@@ -736,6 +739,12 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             payload.addMetric("I_Out", publicCSReceivedData.getiOut());
             payload.addMetric("Storage_Battery_I ", publicCSReceivedData.getStorageBatteryI());
 
+            payload.addMetric("Recharge_Is_Booked", rechargeInfo.getRechargeBooked());
+            payload.addMetric("Fault_Flag", publicCSReceivedData.getFaultFlag());
+            payload.addMetric("Fault_String", publicCSReceivedData.getFaultString());
+            payload.addMetric("Next_Day_Solar_Radiation_Level", rechargeInfo.getSolarRadiationLevel());
+            payload.addMetric("Status_Of_Storage_Battery_Charger", publicCSReceivedData.getStorageBatteryChargerStatus());
+            
         } else if (MODALITY_T311.equals(chosenModality)) {
             // fetch the publishing configuration from the publishing properties
             topic = "privatecsdata";

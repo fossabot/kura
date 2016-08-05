@@ -8,6 +8,9 @@ public class Message0x100 {
     private static final String TIME_TO_RECHARGE_SECONDS = "time.to.recharge.seconds";
     private static final String ENERGY_OUT               = "energy.out";
     private static final String POWER_PV                 = "power.pv";
+    
+    private static final double PV_POWER_AMPLITUDE  = 20;
+    private static final double PV_POWER_PERIOD_MS 	= 30*1000;
 
     private int powerOut;
     private int timeToRechargeMinutes;
@@ -48,7 +51,7 @@ public class Message0x100 {
     }
 
     public int getPowerPV() {
-        return powerPV;
+        return powerPV + (int) (PV_POWER_AMPLITUDE*Math.sin(2*Math.PI*(System.currentTimeMillis())/PV_POWER_PERIOD_MS));
     }
 
     public void setPowerPV(int powerPV) {

@@ -32,7 +32,7 @@ public class ArrowheadRestClient {
 		}
 	}
 	
-	public void requestRechargeAuthorization(String evseId, String userId, int toleranceMs, ArrowheadRestResponseListener<EVSEStatusResponse> listener) {
+	public void requestRechargeAuthorization(String evseId, String userId, long toleranceMs, ArrowheadRestResponseListener<EVSEStatusResponse> listener) {
 		try {
 			Map<String, String> params = new HashMap<String, String>();
 			params.put("user_id", userId);
@@ -133,13 +133,13 @@ public class ArrowheadRestClient {
 
 		@Override
 		public void init(JsonObject object) {
-			if (!object.isNull("isReservedNow"))
+			if (object.get("isReservedNow") != null && !object.isNull("isReservedNow"))
 				this.isReservedNow = object.getBoolean("isReservedNow");
 			
-			if (!object.isNull("nextUser"))
+			if (object.get("nextUser") != null && !object.isNull("nextUser"))
 				this.nextUser = object.getString("nextUser");
 			
-			if (!object.isNull("nextReservationIn"))
+			if (object.get("nextReservationIn") != null && !object.isNull("nextReservationIn"))
 				nextReservationIn = object.getJsonNumber("nextReservationIn").bigIntegerValue().longValue();
 		}
 	}
@@ -154,7 +154,7 @@ public class ArrowheadRestClient {
 
 		@Override
 		public void init(JsonObject object) {
-			if (!object.isNull("status"))
+			if (object.get("status") != null && !object.isNull("status"))
 				this.status = object.getBoolean("status");
 		}
 	}
