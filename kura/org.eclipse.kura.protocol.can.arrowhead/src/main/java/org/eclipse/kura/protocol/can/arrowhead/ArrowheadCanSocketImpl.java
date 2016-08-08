@@ -1,7 +1,9 @@
 package org.eclipse.kura.protocol.can.arrowhead;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.Map;
 
 import org.eclipse.kura.KuraException;
@@ -49,19 +51,20 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private static final Logger s_logger = LoggerFactory.getLogger(ArrowheadCanSocketImpl.class);
     private static final String APP_ID   = "can_publisher";
 
-    // private static final String THREAD_DELAY = "can.initial.threads.delay";
-    // private static final String ID_200_FREQUENCY =
-    // "can.id200.message.frequency";
-    // private static final String ID_201_FREQUENCY =
-    // "can.id201.message.frequency";
-    // private static final String ID_202_FREQUENCY =
-    // "can.id202.message.frequency";
+    private static final String THREAD_DELAY = "can.initial.threads.delay";
+    private static final String ID_200_FREQUENCY =
+    "can.id200.message.frequency";
+    private static final String ID_201_FREQUENCY =
+    "can.id201.message.frequency";
+    private static final String ID_202_FREQUENCY =
+    "can.id202.message.frequency";
     private static final String IS_BIG_ENDIAN = "can.bigendian";
     private static final String MODALITY      = "arrowhead.modality";
     private static final String MODALITY_T311 = "t3.1.1";
     private static final String MODALITY_T312 = "t3.1.2";
     private static final String MODALITY_T32  = "t3.2";
     private static final String ID_OTG        = "arrowhead.t32.idotg";
+    private static final String EVSE_ID       = "arrowhead.evse.id";
 
     private static final String PUBLISH_RATE_PROP_NAME = "publish.rate";
     private static final String CONTROL_TOPIC_NAME     = "control";
@@ -69,26 +72,27 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private CanConnectionService canConnection;
     private Map<String, Object>  classProperties;
     private Thread               listenThread;
-    // private Thread sendThread1;
-    // private Thread sendThread2;
-    // private Thread sendThread3;
+    private Thread sendThread1;
+    private Thread sendThread2;
+    private Thread sendThread3;
     private String               ifName;
     private String               chosenModality;
     private String               idOtg;
-
+    private String				 EVSEid;
+    
     private CloudService cloudService;
     private CloudClient  cloudClient;
 
     private RechargeInfo    rechargeInfo;
     private BookingInfo     bookingInfo;
     private CurrentDateInfo currentDateInfo;
-    // private int threadsDelay;
-    // private int id200Freq;
-    // private int id201Freq;
-    // private int id202Freq;
+    private int threadsDelay;
+    private int id200Freq;
+    private int id201Freq;
+    private int id202Freq;
     private boolean         isBigEndian = true;
 
-    // private volatile boolean senderRunning = true;
+    private volatile boolean senderRunning = true;
     private volatile boolean receiverRunning = true;
 
     private PublicCSDataSnapshot  publicCSReceivedData;
@@ -122,17 +126,40 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         this.cloudService = null;
     }
 
-    protected void startRechargeT312() {
-        // TODO send start recharge frame
+    protected void setStartRechargeFlag(int value) {
+        this.rechargeInfo.setStartRecharge(value);
     }
 
-    protected void stopRechargeT312() {
-        // TODO send stop recharge frame
+    protected String getEVSEId() {
+    	return EVSEid;
     }
-
+    
+    protected void setBookingTime(int day, int month, int year, int hour, int minutes) {
+    	bookingInfo.setBookingDateDay(day);
+    	bookingInfo.setBookingDateMonth(month);
+    	bookingInfo.setBookingDateYear(year);
+    	bookingInfo.setCurrentTimeHour(hour);
+    	bookingInfo.setCurrentTimeMinute(minutes);
+    }
+    
+    protected void setRechargeIsBooked(boolean rechargeIsBooked) {
+    	rechargeInfo.setRechargeBooked((rechargeIsBooked) ? 1 : 0);
+    }
+    
+    protected void updateCurrentDateTime() {
+    	Date nextBookingDate = new Date();
+		GregorianCalendar c = new GregorianCalendar();
+		c.setTime(nextBookingDate);
+		currentDateInfo.setCurrentDateDay(c.get(Calendar.DAY_OF_MONTH));
+		currentDateInfo.setCurrentDateMonth(c.get(Calendar.MONTH));
+		currentDateInfo.setCurrentDateYear(c.get(Calendar.YEAR));
+		bookingInfo.setCurrentTimeMinute(c.get(Calendar.MINUTE));
+		bookingInfo.setCurrentTimeHour(c.get(Calendar.HOUR_OF_DAY));
+    }
+    
     private void subscribeToControlTopic() throws KuraException {
         if (cloudClient.isConnected())
-            cloudClient.subscribe(CONTROL_TOPIC_NAME, 0);
+            cloudClient.subscribe(CONTROL_TOPIC_NAME, 1);
         s_logger.info("subscribed to control topic");
     }
 
@@ -145,6 +172,8 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         public void onMotoTronCSMessage(int code, MotoTronDataSnapshot snapshot);
 
         public void onControlMessage(ControlMessage message);
+        
+        public void onShutdown();
 
     }
 
@@ -163,10 +192,11 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             rechargeInfo = new RechargeInfo(classProperties);
             bookingInfo = new BookingInfo(classProperties);
             currentDateInfo = new CurrentDateInfo(classProperties);
-            // getDelays();
+            getDelays();
             isBigEndian = (Boolean) classProperties.get(IS_BIG_ENDIAN);
             publishRate = ((Integer) classProperties.get(PUBLISH_RATE_PROP_NAME)) * 1000;
             idOtg = (String) classProperties.get(ID_OTG);
+            EVSEid = (String) classProperties.get(EVSE_ID);
         }
 
         publicCSReceivedData = new PublicCSDataSnapshot();
@@ -192,23 +222,29 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         } catch (KuraException e) {
             s_logger.error("Failed to instantiate application logic: " + e.getMessage());
         }
+        
+
 
         // start threads
         startListeningThread();
-        // startSendThreads();
+        startSendThreads();
         startPublishThread();
     }
 
     public void deactivate(ComponentContext componentContext) {
         stopListenThread();
 
-        // stopSendThreads();
+        stopSendThreads();
 
         stopPublishThread();
 
         // Releasing the CloudApplicationClient
         s_logger.info("Releasing CloudApplicationClient for {}...", APP_ID);
         cloudClient.release();
+        
+        if (applicationLogic != null) {
+        	applicationLogic.onShutdown();
+        }
     }
 
     public void updated(Map<String, Object> properties) {
@@ -226,21 +262,23 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             bookingInfo = new BookingInfo(classProperties);
             currentDateInfo = new CurrentDateInfo(classProperties);
 
-            // getDelays();
+            getDelays();
             isBigEndian = (Boolean) classProperties.get(IS_BIG_ENDIAN);
             publishRate = ((Integer) classProperties.get(PUBLISH_RATE_PROP_NAME)) * 1000;
             idOtg = (String) classProperties.get(ID_OTG);
+            
+            EVSEid = (String) classProperties.get(EVSE_ID);
         }
 
         stopListenThread();
 
-        // stopSendThreads();
+        stopSendThreads();
 
         stopPublishThread();
-        // senderRunning = true;
+        senderRunning = true;
 
         startListeningThread();
-        // startSendThreads();
+        startSendThreads();
         startPublishThread();
     }
 
@@ -257,7 +295,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
         if (cm != null) {
             int canId = cm.getCanId();
-            s_logger.info("Received can message with Id: " + canId);
+             // s_logger.info("Received can message with Id: 0x" + Integer.toHexString(canId));
 
             if (applicationLogic == null) {
                 return;
@@ -265,9 +303,9 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
 
             if (canId == 0x100) {
                 CSMessage0x100.parseCanMessage(cm, isBigEndian, publicCSReceivedData);
-                applicationLogic.onPublicCSMessage(canId, publicCSReceivedData);
             } else if (canId == 0x101) {
                 CSMessage0x101.parseCanMessage(cm, publicCSReceivedData);
+                applicationLogic.onPublicCSMessage(canId, publicCSReceivedData);
             } else if (canId == 0x102) {
                 CSMessage0x102.parseCanMessage(cm, isBigEndian, publicCSReceivedData);
             } else if (canId == 0x300) {
@@ -344,7 +382,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     @Override
     public void onConnectionEstablished() {
         try {
-            cloudClient.subscribe(CONTROL_TOPIC_NAME, 0);
+            subscribeToControlTopic();
         } catch (KuraException e) {
             s_logger.error("Failed to subscribe to control topic", e);
         }
@@ -366,113 +404,113 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     //
     // ----------------------------------------------------------------
 
-    // private void getDelays() {
-    // threadsDelay = Integer.parseInt((String)
-    // classProperties.get(THREAD_DELAY));
-    // id200Freq = Integer.parseInt((String)
-    // classProperties.get(ID_200_FREQUENCY));
-    // id201Freq = Integer.parseInt((String)
-    // classProperties.get(ID_201_FREQUENCY));
-    // id202Freq = Integer.parseInt((String)
-    // classProperties.get(ID_202_FREQUENCY));
-    //
-    // }
-    //
-    // private void startSendThreads() {
-    // if (MODALITY_T311.equals(chosenModality)) {
-    // return;
-    // }
-    //
-    // if (sendThread1 != null) {
-    // sendThread1.interrupt();
-    // try {
-    // sendThread1.join(100);
-    // senderRunning = false;
-    // } catch (InterruptedException e) {
-    // // Ignore
-    // }
-    // sendThread1 = null;
-    // }
-    //
-    // sendThread1 = new Thread(new Runnable() {
-    // @Override
-    // public void run() {
-    // try {
-    // Thread.sleep(threadsDelay * 0);
-    // } catch (InterruptedException e) {}
-    // if (canConnection != null) {
-    // while (senderRunning) {
-    // doSend1Test();
-    // s_logger.debug("Thread1 sleeping for: " + id200Freq);
-    // try {
-    // Thread.sleep(id200Freq);
-    // } catch (InterruptedException e) {}
-    // }
-    // }
-    // }
-    // });
-    // sendThread1.start();
-    //
-    // if (sendThread2 != null) {
-    // sendThread2.interrupt();
-    // try {
-    // sendThread2.join(100);
-    // senderRunning = false;
-    // } catch (InterruptedException e) {
-    // // Ignore
-    // }
-    // sendThread2 = null;
-    // }
-    //
-    // sendThread2 = new Thread(new Runnable() {
-    // @Override
-    // public void run() {
-    // try {
-    // Thread.sleep(threadsDelay * 1);
-    // } catch (InterruptedException e) {}
-    // if (canConnection != null) {
-    // while (senderRunning) {
-    // doSend2Test();
-    // s_logger.debug("Thread2 sleeping for: " + id201Freq);
-    // try {
-    // Thread.sleep(id201Freq);
-    // } catch (InterruptedException e) {}
-    // }
-    // }
-    // }
-    // });
-    // sendThread2.start();
-    //
-    // if (sendThread3 != null) {
-    // sendThread3.interrupt();
-    // try {
-    // sendThread3.join(100);
-    // senderRunning = false;
-    // } catch (InterruptedException e) {
-    // // Ignore
-    // }
-    // sendThread3 = null;
-    // }
-    //
-    // sendThread3 = new Thread(new Runnable() {
-    // @Override
-    // public void run() {
-    // try {
-    // Thread.sleep(threadsDelay * 2);
-    // } catch (InterruptedException e) {}
-    // if (canConnection != null) {
-    // while (senderRunning) {
-    // doSend3Test();
-    // s_logger.debug("Thread3 sleeping for: " + id202Freq);
-    // try {
-    // Thread.sleep(id202Freq);
-    // } catch (InterruptedException e) {}
-    // }
-    // }
-    // }
-    // });
-    // sendThread3.start();
-    // }
+     private void getDelays() {
+     threadsDelay = Integer.parseInt((String)
+     classProperties.get(THREAD_DELAY));
+     id200Freq = Integer.parseInt((String)
+     classProperties.get(ID_200_FREQUENCY));
+     id201Freq = Integer.parseInt((String)
+     classProperties.get(ID_201_FREQUENCY));
+     id202Freq = Integer.parseInt((String)
+     classProperties.get(ID_202_FREQUENCY));
+    
+     }
+    
+     private void startSendThreads() {
+     if (MODALITY_T311.equals(chosenModality)) {
+     return;
+     }
+    
+     if (sendThread1 != null) {
+     sendThread1.interrupt();
+     try {
+     sendThread1.join(100);
+     senderRunning = false;
+     } catch (InterruptedException e) {
+     // Ignore
+     }
+     sendThread1 = null;
+     }
+    
+     sendThread1 = new Thread(new Runnable() {
+     @Override
+     public void run() {
+     try {
+     Thread.sleep(threadsDelay * 0);
+     } catch (InterruptedException e) {}
+     if (canConnection != null) {
+     while (senderRunning) {
+     doSend1Test();
+     s_logger.debug("Thread1 sleeping for: " + id200Freq);
+     try {
+     Thread.sleep(id200Freq);
+     } catch (InterruptedException e) {}
+     }
+     }
+     }
+     });
+     sendThread1.start();
+    
+     if (sendThread2 != null) {
+     sendThread2.interrupt();
+     try {
+     sendThread2.join(100);
+     senderRunning = false;
+     } catch (InterruptedException e) {
+     // Ignore
+     }
+     sendThread2 = null;
+     }
+    
+     sendThread2 = new Thread(new Runnable() {
+     @Override
+     public void run() {
+     try {
+     Thread.sleep(threadsDelay * 1);
+     } catch (InterruptedException e) {}
+     if (canConnection != null) {
+     while (senderRunning) {
+     doSend2Test();
+     s_logger.debug("Thread2 sleeping for: " + id201Freq);
+     try {
+     Thread.sleep(id201Freq);
+     } catch (InterruptedException e) {}
+     }
+     }
+     }
+     });
+     sendThread2.start();
+    
+     if (sendThread3 != null) {
+     sendThread3.interrupt();
+     try {
+     sendThread3.join(100);
+     senderRunning = false;
+     } catch (InterruptedException e) {
+     // Ignore
+     }
+     sendThread3 = null;
+     }
+    
+     sendThread3 = new Thread(new Runnable() {
+     @Override
+     public void run() {
+     try {
+     Thread.sleep(threadsDelay * 2);
+     } catch (InterruptedException e) {}
+     if (canConnection != null) {
+     while (senderRunning) {
+     doSend3Test();
+     s_logger.debug("Thread3 sleeping for: " + id202Freq);
+     try {
+     Thread.sleep(id202Freq);
+     } catch (InterruptedException e) {}
+     }
+     }
+     }
+     });
+     sendThread3.start();
+     }
 
     private void startPublishThread() {
         publishThread = new Thread(new Runnable() {
@@ -542,40 +580,40 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         listenThread.start();
     }
 
-    // private void stopSendThreads() {
-    // if (sendThread1 != null) {
-    // sendThread1.interrupt();
-    // try {
-    // sendThread1.join(100);
-    // senderRunning = false;
-    // } catch (InterruptedException e) {
-    // // Ignore
-    // }
-    // }
-    // sendThread1 = null;
-    //
-    // if (sendThread2 != null) {
-    // sendThread2.interrupt();
-    // try {
-    // sendThread2.join(100);
-    // senderRunning = false;
-    // } catch (InterruptedException e) {
-    // // Ignore
-    // }
-    // }
-    // sendThread2 = null;
-    //
-    // if (sendThread3 != null) {
-    // sendThread3.interrupt();
-    // try {
-    // sendThread3.join(100);
-    // senderRunning = false;
-    // } catch (InterruptedException e) {
-    // // Ignore
-    // }
-    // }
-    // sendThread3 = null;
-    // }
+     private void stopSendThreads() {
+     if (sendThread1 != null) {
+     sendThread1.interrupt();
+     try {
+     sendThread1.join(100);
+     senderRunning = false;
+     } catch (InterruptedException e) {
+     // Ignore
+     }
+     }
+     sendThread1 = null;
+    
+     if (sendThread2 != null) {
+     sendThread2.interrupt();
+     try {
+     sendThread2.join(100);
+     senderRunning = false;
+     } catch (InterruptedException e) {
+     // Ignore
+     }
+     }
+     sendThread2 = null;
+    
+     if (sendThread3 != null) {
+     sendThread3.interrupt();
+     try {
+     sendThread3.join(100);
+     senderRunning = false;
+     } catch (InterruptedException e) {
+     // Ignore
+     }
+     }
+     sendThread3 = null;
+     }
 
     private void doSend1Test() {
         try {
@@ -594,6 +632,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private void doSend2Test() {
         try {
             if (MODALITY_T312.equals(chosenModality) || MODALITY_T32.equals(chosenModality)) {
+            	updateCurrentDateTime();
                 sendMessage0x201();
             }
         } catch (Exception e) {
@@ -604,6 +643,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
     private void doSend3Test() {
         try {
             if (MODALITY_T312.equals(chosenModality) || MODALITY_T32.equals(chosenModality)) {
+            	updateCurrentDateTime();
                 sendMessage0x202();
             }
         } catch (Exception e) {
@@ -620,7 +660,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         byte[] bMessage = GWMessage0x200.createMessage(rechargeInfo);
 
         canConnection.sendCanMessage(ifName, GWMessage0x200.getId(), bMessage);
-        s_logger.info("Message sent with id: " + GWMessage0x200.getId());
+        // s_logger.info("Message sent with id: 0x" + Integer.toHexString(GWMessage0x200.getId()));
     }
 
     private void sendMessage0x201() throws KuraException, IOException {
@@ -632,7 +672,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         byte[] bMessage = GWMessage0x201.createMessage(bookingInfo, isBigEndian);
 
         canConnection.sendCanMessage(ifName, GWMessage0x201.getId(), bMessage);
-        s_logger.info("Message sent with id: " + GWMessage0x201.getId());
+        // s_logger.info("Message sent with id: 0x" + Integer.toHexString(GWMessage0x201.getId()));
     }
 
     private void sendMessage0x202() throws KuraException, IOException {
@@ -644,7 +684,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         byte[] bMessage = GWMessage0x202.createMessage(currentDateInfo, isBigEndian);
 
         canConnection.sendCanMessage(ifName, GWMessage0x202.getId(), bMessage);
-        s_logger.info("Message sent with id: " + GWMessage0x202.getId());
+        // s_logger.info("Message sent with id: 0x" + Integer.toHexString(GWMessage0x202.getId()));
     }
 
     private void sendMessage0x400() throws KuraException, IOException {
@@ -655,7 +695,7 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
         byte[] bMessage = GWMessage0x400.createMessage(motoTronReceivedData);
 
         canConnection.sendCanMessage(ifName, GWMessage0x400.getId(), bMessage);
-        s_logger.info("Message sent with id: " + GWMessage0x400.getId());
+        // s_logger.info("Message sent with id: 0x" + Integer.toHexString(GWMessage0x400.getId()));
     }
 
     /**
@@ -692,13 +732,19 @@ public class ArrowheadCanSocketImpl implements ConfigurableComponent, CloudClien
             payload.addMetric("IGBT_Temperature", publicCSReceivedData.getIgbtTemp());
             payload.addMetric("Storage_Battery_Temperature", publicCSReceivedData.getStorageBatteryTemp());
             payload.addMetric("Storage_Battery_SOC", publicCSReceivedData.getStorageBatterySOC());
-
+            
             payload.addMetric("V_Out ", publicCSReceivedData.getvOut());
             payload.addMetric("Storage_Battery_V", publicCSReceivedData.getStorageBatteryV());
             payload.addMetric("PV_System_V", publicCSReceivedData.getPvSystemV());
             payload.addMetric("I_Out", publicCSReceivedData.getiOut());
             payload.addMetric("Storage_Battery_I ", publicCSReceivedData.getStorageBatteryI());
 
+            payload.addMetric("Recharge_Is_Booked", rechargeInfo.getRechargeBooked());
+            payload.addMetric("Fault_Flag", publicCSReceivedData.getFaultFlag());
+            payload.addMetric("Fault_String", publicCSReceivedData.getFaultString());
+            payload.addMetric("Next_Day_Solar_Radiation_Level", rechargeInfo.getSolarRadiationLevel());
+            payload.addMetric("Status_Of_Storage_Battery_Charger", publicCSReceivedData.getStorageBatteryChargerStatus());
+            
         } else if (MODALITY_T311.equals(chosenModality)) {
             // fetch the publishing configuration from the publishing properties
             topic = "privatecsdata";

@@ -10,6 +10,7 @@ public class Message0x101 {
     private static final String AUX_CHARGER_ACTIVE               = "aux.charger.active";
     private static final String STORAGE_BATTERY_CONTACTOR_STATUS = "storage.battery.contactor.status";
     private static final String CONVERTER_CONTACTOR_STATUS       = "converter.contactor.status";
+    private static final String STORAGE_BATTERY_CHARGER_STATUS	 = "storage.battery.charger.status";
     private static final String FAULT_STRING                     = "fault.string";
     private static final String IGBT_TEMP                        = "igbt.temp";
     private static final String STORAGE_TEMP                     = "storage.temp";
@@ -22,6 +23,7 @@ public class Message0x101 {
     private int auxChargerActive;
     private int storageBatteryContactorStatus;
     private int converterContactorStatus;
+    private int storageBatteryChargerStatus;
     private int faultString;
     private int igbtTemp;
     private int storageTemp;
@@ -83,6 +85,14 @@ public class Message0x101 {
         this.converterContactorStatus = converterContactorStatus;
     }
 
+    public int isStorageBatteryChargerStatus () {
+    	return storageBatteryChargerStatus;
+    }
+    
+    public void setStorageBatteryChargerStatus (int storageBatteryChargerStatus) {
+    	this.storageBatteryChargerStatus = storageBatteryChargerStatus;
+    }
+    
     public int getFaultString() {
         return faultString;
     }
@@ -124,6 +134,7 @@ public class Message0x101 {
         setAuxChargerActive(Integer.parseInt((String) properties.get(AUX_CHARGER_ACTIVE)));
         setStorageBatteryContactorStatus(Integer.parseInt((String) properties.get(STORAGE_BATTERY_CONTACTOR_STATUS)));
         setConverterContactorStatus(Integer.parseInt((String) properties.get(CONVERTER_CONTACTOR_STATUS)));
+        setStorageBatteryChargerStatus(Integer.parseInt((String) properties.get(STORAGE_BATTERY_CHARGER_STATUS)));
         setFaultString(Integer.parseInt((String) properties.get(FAULT_STRING)));
         setIgbtTemp(Integer.parseInt((String) properties.get(IGBT_TEMP)));
         setStorageTemp(Integer.parseInt((String) properties.get(STORAGE_TEMP)));

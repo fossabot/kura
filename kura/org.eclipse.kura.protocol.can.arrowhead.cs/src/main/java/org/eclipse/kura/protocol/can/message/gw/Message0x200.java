@@ -1,13 +1,14 @@
 package org.eclipse.kura.protocol.can.message.gw;
 
 import org.eclipse.kura.protocol.can.CanMessage;
+import org.eclipse.kura.protocol.can.arrowhead.cs.GWControlStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class Message0x200 {
     private static final Logger s_logger = LoggerFactory.getLogger(Message0x200.class);
 
-    public static void parseGwCanMessage(CanMessage cm) {
+    public static void parseGwCanMessage(CanMessage cm, GWControlStatus controlStatus) {
         byte[] b = cm.getData();
         if (b != null && b.length == 1) {
             StringBuilder sb = new StringBuilder("received 0x200: ");
@@ -18,10 +19,15 @@ public class Message0x200 {
             int solarIrradiation = (b[0] & 0x0C) >> 2; // Next Day Solar
                                                        // Radiation Level
                                                        // [0-Low; 1-Medium;
-                                                       // 2-High]
+                                                       // 2-High; 3-Service Not Available]
             int csReset = (b[0] & 0x10) >> 4; // Charging station reset
                                               // [0-No;1-Yes]
-
+            
+            controlStatus.setStartRecharge(startRecharge == 1);
+            controlStatus.setNextDaySolarLevel(solarIrradiation);
+            controlStatus.setRechargeIsBooked(isBooked == 1);
+            controlStatus.setChargingStationReset(csReset == 1);
+            
             sb.append("start recharge: " + startRecharge + ", ");
             sb.append("Recharge is booked?: " + isBooked + ", ");
             sb.append("Next Day Solar Radiation Level: " + solarIrradiation + ", ");
@@ -29,8 +35,7 @@ public class Message0x200 {
 
             sb.append(" on id = ");
             sb.append(cm.getCanId());
-            s_logger.info(sb.toString());
+            // s_logger.info(sb.toString());
         }
     }
-
 }

@@ -24,6 +24,14 @@
            <Option label="t3.2" value="t3.2"/>          
         </AD>
             
+        <AD id="arrowhead.recharge.duration"
+            name="arrowhead.recharge.duration"
+            type="Long"
+            cardinality="0"
+            required="true"
+            default="20000"
+            description="Specify the duration in milliseconds of the simulated recharges."/>
+            
        <AD id="can.bigendian"
             name="can.bigendian"
             type="Boolean"
@@ -163,6 +171,16 @@
             min = "0"
             max = "1"
             description="ID 0x101: Converter_Contactor_Status [0-1]"/>
+            
+         <AD id="storage.battery.charger.status"
+            name="storage.battery.charger.status"
+            type="String"
+            cardinality="0"
+            required="true"
+            default="0"
+            min = "0"
+            max = "1"
+            description="ID 0x101: Status of Storage Battery charger [0-1]"/>
 
         <AD id="fault.string"
             name="fault.string"

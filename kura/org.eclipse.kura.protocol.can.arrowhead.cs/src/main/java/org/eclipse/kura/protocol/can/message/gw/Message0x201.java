@@ -37,7 +37,7 @@ public class Message0x201 {
 
             sb.append(" on id = ");
             sb.append(cm.getCanId());
-            s_logger.info(sb.toString());
+            // s_logger.info(sb.toString());
         }
     }
 
