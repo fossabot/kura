@@ -1,0 +1,27 @@
+#Deployment Plugin Project File
+#Thu Feb 16 12:45:30 CET 2017
+build.ant.name=<.>/modbus_build.xml
+build.dp.file=<.>/modbus.dp
+build.location=
+bundles.0.bundle_path=<.>/target/org.eclipse.kura.driver.modbus.provider-1.0.0-SNAPSHOT.jar
+bundles.0.customizer=false
+bundles.0.headers.count=0
+bundles.0.missing=false
+bundles.0.name=bundles/org.eclipse.kura.driver.modbus.provider-1.0.0-SNAPSHOT.jar
+bundles.0.symbolic_name=org.eclipse.kura.driver.modbus.provider;singleton\:\=true
+bundles.0.version=1.0.0.201702160934
+bundles.1.bundle_path=/Users/matteo.maiero/git_eclipse/kura/kura/org.eclipse.kura.driver.modbus.localization/target/org.eclipse.kura.driver.modbus.localization-1.0.0-SNAPSHOT.jar
+bundles.1.customizer=false
+bundles.1.headers.count=0
+bundles.1.missing=false
+bundles.1.name=bundles/org.eclipse.kura.driver.modbus.localization-1.0.0-SNAPSHOT.jar
+bundles.1.symbolic_name=org.eclipse.kura.driver.modbus.localization;singleton\:\=true
+bundles.1.version=1.0.0.201702160933
+bundles.count=2
+certificates.count=0
+general.signbundles=false
+headers.other.headers=
+headers.symbolic.name=modbus
+headers.version=0.1.0
+resources.count=0
+
