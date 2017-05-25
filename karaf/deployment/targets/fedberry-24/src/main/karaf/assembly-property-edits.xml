@@ -80,6 +80,19 @@
         <edit>
             <file>system.properties</file>
             <operation>put</operation>
+            <key>org.osgi.framework.vendor</key>
+            <value>Karaf</value>
+        </edit>
+        <edit>
+            <file>system.properties</file>
+            <operation>put</operation>
+            <key>org.osgi.framework.version</key>
+            <value>4.0.5</value> <!-- TODO: find a way to make this vary or change the way that Kura Uses to load this property -->
+        </edit>
+        
+        <edit>
+            <file>system.properties</file>
+            <operation>put</operation>
             <key>target.device</key>
             <value>generic.raspberry.pi2</value>
         </edit>

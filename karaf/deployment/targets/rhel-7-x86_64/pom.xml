@@ -56,7 +56,7 @@
                     <target>
                         <concat dest="target/distribution/bin/setenv">
                             <fileset dir="target/assembly/bin" includes="setenv"/>
-                            <footer>export JAVA_HOME=/usr/lib/jvm/jre-1.8.0</footer>
+                            <footer>export JAVA_HOME=/opt/java/jdk1.8.0_92/</footer>
                         </concat>
                     </target>
                 </configuration>
