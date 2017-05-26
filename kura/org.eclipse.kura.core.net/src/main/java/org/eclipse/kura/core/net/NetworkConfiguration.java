@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2017 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -40,6 +40,8 @@ import org.eclipse.kura.net.NetInterfaceConfig;
 import org.eclipse.kura.net.NetInterfaceState;
 import org.eclipse.kura.net.NetInterfaceStatus;
 import org.eclipse.kura.net.NetInterfaceType;
+import org.eclipse.kura.net.dhcp.DhcpServerCfg;
+import org.eclipse.kura.net.dhcp.DhcpServerCfgIP4;
 import org.eclipse.kura.net.dhcp.DhcpServerConfig;
 import org.eclipse.kura.net.dhcp.DhcpServerConfig4;
 import org.eclipse.kura.net.dhcp.DhcpServerConfigIP4;
@@ -411,8 +413,6 @@ public class NetworkConfiguration {
     }
 
     public boolean isValid() throws KuraException {
-
-        // for(NetInterfaceConfig netInterfaceConfig : m_netInterfaceConfigs) {
         Iterator<String> it = this.m_netInterfaceConfigs.keySet().iterator();
         while (it.hasNext()) {
             NetInterfaceConfig<? extends NetInterfaceAddressConfig> netInterfaceConfig = this.m_netInterfaceConfigs
@@ -424,9 +424,9 @@ public class NetworkConfiguration {
             }
 
             NetInterfaceType type = netInterfaceConfig.getType();
-            if (type != NetInterfaceType.ETHERNET && type != NetInterfaceType.WIFI
+            if (type != NetInterfaceType.ETHERNET && type != NetInterfaceType.WIFI && type != NetInterfaceType.MODEM
                     && type != NetInterfaceType.LOOPBACK) {
-                s_logger.error("Type must be ETHERNET, WIFI, or LOOPBACK - type is " + type);
+                s_logger.error("Type must be ETHERNET, WIFI, MODEM, or LOOPBACK - type is " + type);
                 return false;
             }
 
@@ -761,11 +761,7 @@ public class NetworkConfiguration {
 
         properties.put(prefix + ".ssid", wifiConfig.getSSID());
         properties.put(prefix + ".driver", wifiConfig.getDriver());
-        if (wifiConfig.getMode() != null) {
-            properties.put(prefix + ".mode", wifiConfig.getMode().toString());
-        } else {
-            properties.put(prefix + ".mode", WifiMode.UNKNOWN.toString());
-        }
+        properties.put(prefix + ".mode", wifiConfig.getMode().toString());
         if (wifiConfig.getSecurity() != null) {
             properties.put(prefix + ".securityType", wifiConfig.getSecurity().toString());
         } else {
@@ -773,12 +769,12 @@ public class NetworkConfiguration {
         }
         properties.put(prefix + ".channel", sbChannel.toString());
         Password psswd = wifiConfig.getPasskey();
-        if (wifiConfig != null && psswd != null) {
+        if (psswd != null) {
             properties.put(prefix + ".passphrase", psswd);
         } else {
             properties.put(prefix + ".passphrase", new Password(""));
         }
-        if (wifiConfig != null && wifiConfig.getHardwareMode() != null) {
+        if (wifiConfig.getHardwareMode() != null) {
             properties.put(prefix + ".hardwareMode", wifiConfig.getHardwareMode());
         } else {
             properties.put(prefix + ".hardwareMode", "");
@@ -1423,7 +1419,7 @@ public class NetworkConfiguration {
 
     private void populateNetInterfaceConfiguration(
             AbstractNetInterface<? extends NetInterfaceAddressConfig> netInterfaceConfig, Map<String, Object> props)
-                    throws UnknownHostException, KuraException {
+            throws UnknownHostException, KuraException {
         String interfaceName = netInterfaceConfig.getName();
 
         StringBuffer keyBuffer = new StringBuffer();
@@ -1766,8 +1762,8 @@ public class NetworkConfiguration {
                 String configWifiMode = netIfPrefix + "wifi.mode";
                 if (props.containsKey(configWifiMode)) {
 
-                    WifiMode mode = WifiMode.INFRA;     // FIXME: INFRA for now while debugging - probably want this as
-     // UNKNOWN
+                    // FIXME: INFRA for now while debugging - probably want this as UNKNOWN
+                    WifiMode mode = WifiMode.INFRA;
                     if (props.get(configWifiMode) != null) {
                         mode = WifiMode.valueOf((String) props.get(configWifiMode));
                     }
@@ -2030,10 +2026,14 @@ public class NetworkConfiguration {
 
                     dnServers.add(routerAddress);
 
-                    DhcpServerConfigIP4 dhcpServerConfig = new DhcpServerConfigIP4(interfaceName, dhcpServerEnabled,
-                            subnet, routerAddress, subnetMask, defaultLeaseTime, maximumLeaseTime, prefix, rangeStart,
-                            rangeEnd, passDns, dnServers);
-                    netConfigs.add(dhcpServerConfig);
+                    DhcpServerCfg dhcpServerCfg = new DhcpServerCfg(interfaceName, dhcpServerEnabled, defaultLeaseTime, maximumLeaseTime, passDns);
+					DhcpServerCfgIP4 dhcpServerCfgIP4 = new DhcpServerCfgIP4(subnet, subnetMask, prefix,
+							routerAddress, rangeStart, rangeEnd, dnServers);
+                    try {
+						netConfigs.add(new DhcpServerConfigIP4(dhcpServerCfg, dhcpServerCfgIP4));
+                    } catch (KuraException e) {
+                    	s_logger.warn("This invalid DhcpServerCfgIP4 configuration is ignored - {}, {}", dhcpServerCfg, dhcpServerCfgIP4);
+                    }
                 } else {
                     s_logger.trace("Not including DhcpServerConfig - router: " + routerAddress + ", range start: "
                             + rangeStart + ", range end: " + rangeEnd);

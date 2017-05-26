@@ -33,6 +33,21 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 public interface GwtWireService extends RemoteService {
 
     /**
+     * This is a Wire Component OSGi Property that denotes that the Wire Component has been
+     * deleted visually from the Wire Graph. This property will only be present if
+     * and only if the Wire Component is removed visually from the Wire Graph. This
+     * does not signify that the Wire Component is eligible for permanent removal
+     * from OSGi runtime. This OSGi service property has been introduced to optimize
+     * creation of new Wire Components in the Wire Graph. A possible scenario is when
+     * the user removes a Wire Component with a name set to <b>A</b> and adds same type of
+     * Wire Component with the same name <b>A</b>. In case of this, the previous Wire Component
+     * is updated with this OSGi service property and eventually while saving the entire
+     * Wire Graph, the new configuration of the new Wire Component will be captured and will
+     * update the old Wire Component that has been updated with this property.
+     */
+    public static final String DELETED_WIRE_COMPONENT = "deletedfromWireGraph";
+
+    /**
      * Retrieves all the registered driver instances.
      *
      * @param xsrfToken
@@ -110,11 +125,4 @@ public interface GwtWireService extends RemoteService {
      */
     public void updateWireConfiguration(GwtXSRFToken xsrfToken, String newJsonConfiguration,
             Map<String, GwtConfigComponent> configurations) throws GwtKuraException;
-
-    /**
-     * Returns the Driver Pid property as specified in {@link org.eclipse.kura.asset.AssetConstants}
-     * 
-     * @return String representing the {@link org.eclipse.kura.asset.AssetConstants.ASSET_DRIVER_PROP}
-     */
-    public String getDriverPidProp();
 }

@@ -1,10 +1,14 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates and others
+ * Copyright (c) 2011, 2017 Eurotech and/or its affiliates and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *  Eurotech
+ *  Amit Kumar Mondal
  *
  *******************************************************************************/
 package org.eclipse.kura.web.shared.service;
@@ -26,6 +30,20 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
  */
 @RemoteServiceRelativePath("component")
 public interface GwtComponentService extends RemoteService {
+
+    /**
+     * Return the list of PIDs of all the components that
+     * are tracked by the configuration service.
+     *
+     * @param xsrfToken
+     *            the cross site request forgery token.
+     * 
+     * @return list of PIDs for the registered components.
+     * 
+     * @throws GwtKuraException
+     *             if the list of components registered in the framework cannot be extracted.
+     */
+    public List<String> findTrackedPids(GwtXSRFToken xsrfToken) throws GwtKuraException;
 
     /**
      * Returns a the list of component configurations. This list is filtered from a set of services that need to be
@@ -139,13 +157,15 @@ public interface GwtComponentService extends RemoteService {
      */
     public void updateComponentConfiguration(GwtXSRFToken xsrfToken, GwtConfigComponent configComponent)
             throws GwtKuraException;
-            
+
     public void createFactoryComponent(GwtXSRFToken xsrfToken, String factoryPid, String pid) throws GwtKuraException;
 
     public void deleteFactoryConfiguration(GwtXSRFToken xsrfToken, String pid, boolean takeSnapshot)
             throws GwtKuraException;
-    
+
     public List<String> findFactoryComponents(GwtXSRFToken xsrfToken) throws GwtKuraException;
+    
+    public boolean updateProperties(GwtXSRFToken xsrfToken, String pid, Map<String, Object> properties) throws GwtKuraException;
 
     public GwtConfigComponent findWireComponentConfigurationFromPid(GwtXSRFToken xsrfToken, String pid,
             String factoryPid, Map<String, Object> extraProps) throws GwtKuraException;

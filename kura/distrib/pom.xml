@@ -22,7 +22,7 @@
 	<parent>
 		<artifactId>kura-pom-first</artifactId>
 		<groupId>org.eclipse.kura</groupId>
-		<version>3.0.0-SNAPSHOT</version>
+		<version>3.1.0-SNAPSHOT</version>
 		<relativePath>../pom_pom.xml</relativePath>
 	</parent>
 
@@ -238,32 +238,12 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.eclipse.kura</groupId>
-									<artifactId>org.eclipse.kura.linux.usb.armv5sf</artifactId>
-									<version>${org.eclipse.kura.linux.usb.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.eclipse.kura</groupId>
 									<artifactId>org.eclipse.kura.linux.usb.armv6hf</artifactId>
 									<version>${org.eclipse.kura.linux.usb.version}</version>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.eclipse.kura</groupId>
-									<artifactId>org.eclipse.kura.linux.usb.x86</artifactId>
-									<version>${org.eclipse.kura.linux.usb.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.eclipse.kura</groupId>
 									<artifactId>org.eclipse.kura.linux.usb.x86_64</artifactId>
-									<version>${org.eclipse.kura.linux.usb.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.eclipse.kura</groupId>
-									<artifactId>org.eclipse.kura.linux.usb.x86_64.yocto</artifactId>
-									<version>${org.eclipse.kura.linux.usb.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.eclipse.kura</groupId>
-									<artifactId>org.eclipse.kura.linux.usb.x86.ubuntu</artifactId>
 									<version>${org.eclipse.kura.linux.usb.version}</version>
 								</artifactItem>
 								<artifactItem>
@@ -361,6 +341,16 @@
 									<groupId>org.eclipse.kura</groupId>
 									<artifactId>org.eclipse.kura.wire.provider</artifactId>
 									<version>${org.eclipse.kura.wire.provider.version}</version>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.eclipse.kura</groupId>
+									<artifactId>org.eclipse.kura.driver.opcua.localization</artifactId>
+									<version>${org.eclipse.kura.driver.opcua.localization.version}</version>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.eclipse.kura</groupId>
+									<artifactId>org.eclipse.kura.driver.opcua.provider</artifactId>
+									<version>${org.eclipse.kura.driver.opcua.provider.version}</version>
 								</artifactItem>
 							</artifactItems>
 							<stripVersion>true</stripVersion>
@@ -464,12 +454,8 @@
 							    <move file="target/plugins/org.eclipse.kura.linux.net.jar" tofile="target/plugins/org.eclipse.kura.linux.net_${org.eclipse.kura.linux.net.version}.jar"/>
 							    <move file="target/plugins/org.eclipse.kura.linux.position.jar" tofile="target/plugins/org.eclipse.kura.linux.position_${org.eclipse.kura.linux.position.version}.jar"/>
 							    <move file="target/plugins/org.eclipse.kura.linux.usb.jar" tofile="target/plugins/org.eclipse.kura.linux.usb_${org.eclipse.kura.linux.usb.version}.jar"/>
-							    <move file="target/plugins/org.eclipse.kura.linux.usb.armv5sf.jar" tofile="target/plugins/org.eclipse.kura.linux.usb.armv5sf_${org.eclipse.kura.linux.usb.version}.jar"/>
 							    <move file="target/plugins/org.eclipse.kura.linux.usb.armv6hf.jar" tofile="target/plugins/org.eclipse.kura.linux.usb.armv6hf_${org.eclipse.kura.linux.usb.version}.jar"/>
-							    <move file="target/plugins/org.eclipse.kura.linux.usb.x86.jar" tofile="target/plugins/org.eclipse.kura.linux.usb.x86_${org.eclipse.kura.linux.usb.version}.jar"/>
 							    <move file="target/plugins/org.eclipse.kura.linux.usb.x86_64.jar" tofile="target/plugins/org.eclipse.kura.linux.usb.x86_64_${org.eclipse.kura.linux.usb.version}.jar"/>
-							    <move file="target/plugins/org.eclipse.kura.linux.usb.x86_64.yocto.jar" tofile="target/plugins/org.eclipse.kura.linux.usb.x86_64.yocto_${org.eclipse.kura.linux.usb.version}.jar"/>
-							    <move file="target/plugins/org.eclipse.kura.linux.usb.x86.ubuntu.jar" tofile="target/plugins/org.eclipse.kura.linux.usb.x86.ubuntu_${org.eclipse.kura.linux.usb.version}.jar"/>
 							    <move file="target/plugins/org.eclipse.kura.linux.bluetooth.jar" tofile="target/plugins/org.eclipse.kura.linux.bluetooth_${org.eclipse.kura.linux.bluetooth.version}.jar"/>
   								<move file="target/plugins/org.eclipse.kura.linux.watchdog.jar" tofile="target/plugins/org.eclipse.kura.linux.watchdog_${org.eclipse.kura.linux.watchdog.version}.jar"/>
 								<move file="target/plugins/org.eclipse.kura.localization.jar" tofile="target/plugins/org.eclipse.kura.localization_${org.eclipse.kura.localization.version}.jar"/>
@@ -493,6 +479,8 @@
 							    <move file="target/plugins/org.eclipse.kura.wire.component.provider.jar" tofile="target/plugins/org.eclipse.kura.wire.component.provider_${org.eclipse.kura.wire.component.provider.version}.jar"/>
 							    <move file="target/plugins/org.eclipse.kura.wire.helper.provider.jar" tofile="target/plugins/org.eclipse.kura.wire.helper.provider_${org.eclipse.kura.wire.helper.provider.version}.jar"/>
 							    <move file="target/plugins/org.eclipse.kura.wire.provider.jar" tofile="target/plugins/org.eclipse.kura.wire.provider_${org.eclipse.kura.wire.provider.version}.jar"/>
+							    <move file="target/plugins/org.eclipse.kura.driver.opcua.localization.jar" tofile="target/plugins/org.eclipse.kura.driver.opcua.localization_${org.eclipse.kura.driver.opcua.localization.version}.jar"/>
+							    <move file="target/plugins/org.eclipse.kura.driver.opcua.provider.jar" tofile="target/plugins/org.eclipse.kura.driver.opcua.provider_${org.eclipse.kura.driver.opcua.provider.version}.jar"/>
 							</tasks>
 						</configuration>
 					</execution>
@@ -1114,7 +1102,7 @@
                                         <property name="project.build.profile" value="${project.build.profile}" />
                                         <property name="project.build.directory" value="${project.build.directory}" />
                                         <property name="target.device" value="intel-edison" />
-                                        <property name="native.tag" value="x86_64.yocto"/>
+                                        <property name="native.tag" value="x86_64"/>
                                         <property name="kura.os.version" value="yocto_1.6.1_edison" />
                                         <property name="build.name" value="intel-edison" />
                                         <property name="kura.arch" value="x86_64" />
@@ -1180,7 +1168,7 @@
                                         <property name="project.build.profile" value="${project.build.profile}" />
                                         <property name="project.build.directory" value="${project.build.directory}" />
                                         <property name="target.device" value="intel-edison" />
-                                        <property name="native.tag" value="x86_64.yocto"/>
+                                        <property name="native.tag" value="x86_64"/>
                                         <property name="kura.os.version" value="yocto_1.6.1_edison" />
                                         <property name="build.name" value="intel-edison-nn" />
                                         <property name="kura.arch" value="x86_64" />
@@ -2065,7 +2053,7 @@
 		</profile>
 
 		<profile>
-			<id>fedorapi</id>
+			<id>fedora25-nn</id>
 			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
@@ -2096,7 +2084,7 @@
 						<version>1.7</version>
 						<executions>
 							<execution>
-								<id>fedorapi-jars</id>
+								<id>fedora25-nn-jars</id>
 								<phase>prepare-package</phase>
 								<goals>
 									<goal>run</goal>
@@ -2107,68 +2095,7 @@
 										<property name="project.version" value="${project.version}" />
 										<property name="project.build.profile" value="${project.build.profile}" />
 										<property name="project.build.directory" value="${project.build.directory}" />
-										<property name="build.name" value="fedorapi" />
-										<property name="target.device" value="raspberry-pi" />
-										<property name="native.tag" value="armv6hf"/>
-										<property name="kura.os.version" value="fedora" />
-										<property name="kura.arch" value="armv7_hf" />
-										<property name="kura.mem.size" value="512m" />
-										<property name="kura.install.dir" value="/opt/eclipse" />
-										<ant antfile="${basedir}/src/main/ant/build_equinox_distrib.xml"
-											target="dist-linux" />
-									</target>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-
-		<profile>
-			<id>fedorapi-nn</id>
-			<activation>
-				<activeByDefault>false</activeByDefault>
-			</activation>
-			<build>
-				<resources>
-					<resource>
-						<directory>src/main/resources</directory>
-						<filtering>true</filtering>
-					</resource>
-				</resources>
-				<plugins>
-					<plugin>
-						<groupId>org.codehaus.mojo</groupId>
-						<artifactId>buildnumber-maven-plugin</artifactId>
-						<version>1.0</version>
-						<executions>
-							<execution>
-								<phase>validate</phase>
-								<goals>
-									<goal>create-timestamp</goal>
-								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.apache.maven.plugins</groupId>
-						<artifactId>maven-antrun-plugin</artifactId>
-						<version>1.7</version>
-						<executions>
-							<execution>
-								<id>fedorapi-nn-jars</id>
-								<phase>prepare-package</phase>
-								<goals>
-									<goal>run</goal>
-								</goals>
-								<configuration>
-									<target>
-										<property name="buildNumber" value="buildNumber" />
-										<property name="project.version" value="${project.version}" />
-										<property name="project.build.profile" value="${project.build.profile}" />
-										<property name="project.build.directory" value="${project.build.directory}" />
-										<property name="build.name" value="fedorapi-nn" />
+										<property name="build.name" value="fedora25-nn" />
 										<property name="target.device" value="raspberry-pi-nn" />
 										<property name="native.tag" value="armv6hf"/>
 										<property name="kura.os.version" value="fedora" />
@@ -2185,8 +2112,6 @@
 				</plugins>
 			</build>
 		</profile>
-
-
 		<profile>
 			<id>Win64-nn</id>
 			<activation>
@@ -2364,15 +2289,6 @@
 											file="${project.build.directory}/plugins/org.eclipse.kura.api_${org.eclipse.kura.api.version}.jar"
 											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
 										<copy
-											file="${project.build.directory}/plugins/org.eclipse.kura.core.comm_${org.eclipse.kura.core.comm.version}.jar"
-											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
-										<copy
-											file="${project.build.directory}/plugins/org.eclipse.kura.core.configuration_${org.eclipse.kura.core.configuration.version}.jar"
-											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
-										<copy
-											file="${project.build.directory}/plugins/org.eclipse.kura.core_${org.eclipse.kura.core.version}.jar"
-											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
-										<copy
 											file="${project.build.directory}/plugins/org.eclipse.kura.camel_${org.eclipse.kura.camel.version}.jar"
 											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
                                         <copy
@@ -2382,7 +2298,31 @@
 											file="${project.build.directory}/plugins/org.eclipse.kura.camel.xml_${org.eclipse.kura.camel.xml.version}.jar"
 											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
 										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.core_${org.eclipse.kura.core.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
 											file="${project.build.directory}/plugins/org.eclipse.kura.core.certificates_${org.eclipse.kura.core.certificates.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.core.cloud_${org.eclipse.kura.core.cloud.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.core.comm_${org.eclipse.kura.core.comm.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.core.configuration_${org.eclipse.kura.core.configuration.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.core.crypto_${org.eclipse.kura.core.crypto.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.core.deployment_${org.eclipse.kura.core.deployment.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.core.log_${org.eclipse.kura.core.log.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.core.net_${org.eclipse.kura.core.net.version}.jar"
 											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
 										<copy
 											file="${project.build.directory}/plugins/org.eclipse.kura.deployment.agent_${org.eclipse.kura.deployment.agent.version}.jar"
@@ -2391,16 +2331,37 @@
 											file="${project.build.directory}/plugins/org.eclipse.kura.core.status_${org.eclipse.kura.core.status.version}.jar"
 											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
 										<copy
-											file="${project.build.directory}/plugins/org.eclipse.kura.core.cloud_${org.eclipse.kura.core.cloud.version}.jar"
-											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
-										<copy
-											file="${project.build.directory}/plugins/org.eclipse.kura.core.crypto_${org.eclipse.kura.core.crypto.version}.jar"
-											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
-										<copy
-											file="${project.build.directory}/plugins/org.eclipse.kura.core.net_${org.eclipse.kura.core.net.version}.jar"
-											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
-										<copy
 											file="${project.build.directory}/plugins/org.eclipse.kura.linux.bluetooth_${org.eclipse.kura.linux.bluetooth.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.asset.provider_${org.eclipse.kura.asset.provider.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.asset.cloudlet.provider_${org.eclipse.kura.asset.cloudlet.provider.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.asset.helper.provider_${org.eclipse.kura.asset.helper.provider.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.driver.helper.provider_${org.eclipse.kura.driver.helper.provider.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.localization_${org.eclipse.kura.localization.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.localization.resources_${org.eclipse.kura.localization.resources.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.util_${org.eclipse.kura.util.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.wire.component.provider_${org.eclipse.kura.wire.component.provider.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.wire.helper.provider_${org.eclipse.kura.wire.helper.provider.version}.jar"
+											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
+										<copy
+											file="${project.build.directory}/plugins/org.eclipse.kura.wire.provider_${org.eclipse.kura.wire.provider.version}.jar"
 											todir="${project.build.directory}/staging/target-definition/equinox_3.11.1/repository/plugins" />
 										<copy
 											file="${project.build.directory}/plugins/org.eclipse.kura.web2_${org.eclipse.kura.web2.version}.jar"
@@ -2719,6 +2680,19 @@
 									<target if="${is.not.snapshot}">
 										<ant antfile="${basedir}/src/main/ant/build_camel-quickstart_dp.xml"
 											target="build-dp" />
+									</target>
+								</configuration>
+							</execution>
+							
+							<execution>
+								<id>opcua-dp</id>
+								<phase>install</phase>
+								<goals>
+									<goal>run</goal>
+								</goals>
+								<configuration>
+									<target if="${is.not.snapshot}">
+										<ant antfile="${basedir}/src/main/ant/build_opcua_dp.xml" target="build-dp" />
 									</target>
 								</configuration>
 							</execution>

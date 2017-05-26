@@ -9,7 +9,7 @@
  * Contributors:
  *  Eurotech
  *  Amit Kumar Mondal
- *  
+ *
  *******************************************************************************/
 /**
  * Render the Content in the Wire Component Properties Panel based on Service (GwtBSConfigComponent) selected in Wire graph
@@ -18,6 +18,8 @@
  * for both numeric and other textual field with validate() checking if value in numeric fields is numeric
  */
 package org.eclipse.kura.web.client.ui.wires;
+
+import static org.eclipse.kura.web.shared.AssetConstants.CHANNEL_PROPERTY_SEPARATOR;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +32,9 @@ import java.util.Set;
 import java.util.logging.Level;
 
 import org.eclipse.kura.web.client.ui.AbstractServicesUi;
+import org.eclipse.kura.web.client.ui.EntryClassUi;
 import org.eclipse.kura.web.client.util.FailureHandler;
+import org.eclipse.kura.web.shared.AssetConstants;
 import org.eclipse.kura.web.shared.model.GwtChannelInfo;
 import org.eclipse.kura.web.shared.model.GwtConfigComponent;
 import org.eclipse.kura.web.shared.model.GwtConfigParameter;
@@ -46,8 +50,10 @@ import org.gwtbootstrap3.client.ui.Alert;
 import org.gwtbootstrap3.client.ui.Button;
 import org.gwtbootstrap3.client.ui.FieldSet;
 import org.gwtbootstrap3.client.ui.FormGroup;
+import org.gwtbootstrap3.client.ui.FormLabel;
 import org.gwtbootstrap3.client.ui.Modal;
 import org.gwtbootstrap3.client.ui.Panel;
+import org.gwtbootstrap3.client.ui.TextBox;
 import org.gwtbootstrap3.client.ui.gwt.CellTable;
 import org.gwtbootstrap3.client.ui.html.Strong;
 import org.gwtbootstrap3.client.ui.html.Text;
@@ -55,10 +61,11 @@ import org.gwtbootstrap3.client.ui.html.Text;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.cell.client.TextCell;
-import com.google.gwt.cell.client.TextInputCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.Column;
@@ -107,12 +114,20 @@ public class PropertiesUi extends AbstractServicesUi {
     @UiField
     Text incompleteFieldsText;
 
-    private static final String PROPERTIES_DRIVER_IDENTIFIER = "DRIVER";
-    private static final String PROPERTIES_CHANNEL_IDENTIFIER = "CH";
+    @UiField
+    Modal newChannelModal;
+    @UiField
+    FormLabel newChannelNameLabel;
+    @UiField
+    FormLabel newChannelNameError;
+    @UiField
+    TextBox newChannelNameInput;
+    @UiField
+    Button btnCreateNewChannel;
+    @UiField
+    Button btnCancelCreatingNewChannel;
 
-    private static final String CHANNEL_VALUE_TYPE = "value.type";
-    private static final String CHANNEL_TYPE = "type";
-    private static final String CHANNEL_NAME = "name";
+    private static final String INVALID_CLASS_NAME = "error-text-box";
 
     private static final int MAXIMUM_PAGE_SIZE = 5;
 
@@ -129,8 +144,6 @@ public class PropertiesUi extends AbstractServicesUi {
     private final String pid;
 
     private final Set<String> nonValidatedCells;
-
-    private String driverPidProp = "driver.pid";
 
     private boolean dirty;
     private boolean isWireAsset = false;
@@ -158,20 +171,8 @@ public class PropertiesUi extends AbstractServicesUi {
                 && this.configurableComponent.getFactoryId().contains("WireAsset");
 
         if (this.isWireAsset) {
-            this.gwtWireService.getDriverPidProp(new AsyncCallback<String>() {
-
-                @Override
-                public void onFailure(final Throwable caught) {
-                    FailureHandler.handle(caught);
-                }
-
-                @Override
-                public void onSuccess(String result) {
-                    PropertiesUi.this.channelTitle.setText(
-                            MSGS.channelTableTitle(PropertiesUi.this.configurableComponent.get(result).toString()));
-                    driverPidProp = result;
-                }
-            });
+            PropertiesUi.this.channelTitle.setText(MSGS.channelTableTitle(
+                    PropertiesUi.this.configurableComponent.get(AssetConstants.ASSET_DRIVER_PROP.value()).toString()));
         }
 
         this.btnDownload.addClickHandler(new ClickHandler() {
@@ -194,31 +195,8 @@ public class PropertiesUi extends AbstractServicesUi {
 
             @Override
             public void onClick(final ClickEvent event) {
-                final GwtChannelInfo ci = new GwtChannelInfo();
-                ci.setId(String.valueOf(PropertiesUi.this.findNextChannelId()));
-                ci.setName(MSGS.wiresChannel() + " " + ci.getId());
-                ci.setType(GwtWiresChannelType.READ.name());
-                ci.setValueType(GwtWiresDataType.INTEGER.name());
-                for (final GwtConfigParameter param : PropertiesUi.this.driverDescriptor.getParameters()) {
-                    ci.set(param.getName(), param.getDefault());
-                }
-
-                PropertiesUi.this.channelsDataProvider.getList().add(ci);
-                PropertiesUi.this.channelsDataProvider.refresh();
-                PropertiesUi.this.channelPager.lastPage();
-                PropertiesUi.this.setDirty(true);
-            }
-        });
-
-        this.btnRemove.addClickHandler(new ClickHandler() {
-
-            @Override
-            public void onClick(final ClickEvent event) {
-                final GwtChannelInfo ci = PropertiesUi.this.selectionModel.getSelectedObject();
-                PropertiesUi.this.channelsDataProvider.getList().remove(ci);
-                PropertiesUi.this.channelsDataProvider.refresh();
-                PropertiesUi.this.btnRemove.setEnabled(false);
-                PropertiesUi.this.setDirty(true);
+                PropertiesUi.this.newChannelNameInput.setText(getNewChannelName());
+                PropertiesUi.this.newChannelModal.show();
             }
         });
 
@@ -232,36 +210,9 @@ public class PropertiesUi extends AbstractServicesUi {
 
         renderForm();
         initInvalidDataModal();
+        initNewChannelModal();
 
         setDirty(false);
-
-        if (this.isWireAsset) {
-            // Retrieve base Driver descriptor
-            this.gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
-
-                @Override
-                public void onFailure(final Throwable caught) {
-                    FailureHandler.handle(caught);
-                }
-
-                @Override
-                public void onSuccess(final GwtXSRFToken result) {
-                    PropertiesUi.this.gwtWireService.getGwtBaseChannelDescriptor(result,
-                            new AsyncCallback<GwtConfigComponent>() {
-
-                        @Override
-                        public void onFailure(final Throwable caught) {
-                            FailureHandler.handle(caught);
-                        }
-
-                        @Override
-                        public void onSuccess(final GwtConfigComponent result) {
-                            PropertiesUi.this.baseDriverDescriptor = result;
-                        }
-                    });
-                }
-            });
-        }
     }
 
     public GwtConfigComponent getConfiguration() {
@@ -285,9 +236,9 @@ public class PropertiesUi extends AbstractServicesUi {
     public void renderForm() {
         this.fields.clear();
         for (final GwtConfigParameter param : this.configurableComponent.getParameters()) {
-            final String[] tokens = param.getId().split("\\.");
-            boolean isChannelData = tokens.length > 2 && tokens[1].trim().equals(PROPERTIES_CHANNEL_IDENTIFIER);
-            final boolean isDriverField = param.getId().equals(driverPidProp);
+            final String[] tokens = param.getId().split(CHANNEL_PROPERTY_SEPARATOR.value());
+            boolean isChannelData = tokens.length == 2;
+            final boolean isDriverField = param.getId().equals(AssetConstants.ASSET_DRIVER_PROP.value());
 
             isChannelData = isChannelData && this.isWireAsset;
             if (!isChannelData && !isDriverField) {
@@ -301,67 +252,84 @@ public class PropertiesUi extends AbstractServicesUi {
         }
 
         if (this.isWireAsset) {
-            this.gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
-
-                @Override
-                public void onFailure(final Throwable caught) {
-                    FailureHandler.handle(caught);
-                }
-
-                @Override
-                public void onSuccess(final GwtXSRFToken result) {
-                    PropertiesUi.this.gwtWireService.getGwtChannelDescriptor(result,
-                            PropertiesUi.this.configurableComponent.get(driverPidProp).toString(),
-                            new AsyncCallback<GwtConfigComponent>() {
-
-                        @Override
-                        public void onFailure(final Throwable caught) {
-                            FailureHandler.handle(caught);
-                        }
-
-                        @Override
-                        public void onSuccess(final GwtConfigComponent result) {
-                            PropertiesUi.this.driverDescriptor = result;
-                            PropertiesUi.this.addDefaultColumns();
-                            for (final GwtConfigParameter param : result.getParameters()) {
-                                PropertiesUi.this.channelTable.addColumn(PropertiesUi.this.getColumnFromParam(param),
-                                        new TextHeader(param.getName()));
-                            }
-
-                            PropertiesUi.this.gwtXSRFService.generateSecurityToken(new AsyncCallback<GwtXSRFToken>() {
-
-                                @Override
-                                public void onFailure(final Throwable caught) {
-                                    FailureHandler.handle(caught);
-                                }
-
-                                @Override
-                                public void onSuccess(final GwtXSRFToken result) {
-                                    PropertiesUi.this.gwtWireService.getGwtChannels(result,
-                                            PropertiesUi.this.driverDescriptor, PropertiesUi.this.configurableComponent,
-                                            new AsyncCallback<List<GwtChannelInfo>>() {
-
-                                        @Override
-                                        public void onFailure(final Throwable caught) {
-                                            FailureHandler.handle(caught);
-                                        }
-
-                                        @Override
-                                        public void onSuccess(final List<GwtChannelInfo> result) {
-                                            PropertiesUi.this.channelsDataProvider.getList().clear();
-                                            PropertiesUi.this.channelsDataProvider.getList().addAll(result);
-                                            PropertiesUi.this.channelsDataProvider.refresh();
-                                            PropertiesUi.this.channelPanel.setVisible(true);
-                                        }
-                                    });
-                                }
-                            });
-                        }
-                    });
-                }
-            });
+            EntryClassUi.showWaitModal();
+            this.gwtXSRFService.generateSecurityToken(new GetAssetDataCallback());
         }
 
+    }
+
+    private abstract class BaseAsyncCallback<T> implements AsyncCallback<T> {
+
+        @Override
+        public void onFailure(Throwable caught) {
+            EntryClassUi.hideWaitModal();
+            FailureHandler.handle(caught);
+        }
+    }
+
+    private final class GetAssetDataCallback extends BaseAsyncCallback<GwtXSRFToken> {
+
+        @Override
+        public void onSuccess(GwtXSRFToken result) {
+            PropertiesUi.this.gwtWireService.getGwtBaseChannelDescriptor(result,
+                    new BaseAsyncCallback<GwtConfigComponent>() {
+
+                        @Override
+                        public void onSuccess(GwtConfigComponent result) {
+                            PropertiesUi.this.baseDriverDescriptor = result;
+                            PropertiesUi.this.gwtXSRFService
+                                    .generateSecurityToken(new BaseAsyncCallback<GwtXSRFToken>() {
+
+                                        @Override
+                                        public void onSuccess(final GwtXSRFToken result) {
+                                            PropertiesUi.this.gwtWireService.getGwtChannelDescriptor(result,
+                                                    PropertiesUi.this.configurableComponent
+                                                            .get(AssetConstants.ASSET_DRIVER_PROP.value()).toString(),
+                                                    new BaseAsyncCallback<GwtConfigComponent>() {
+
+                                                        @Override
+                                                        public void onSuccess(final GwtConfigComponent result) {
+                                                            PropertiesUi.this.driverDescriptor = result;
+                                                            PropertiesUi.this.addDefaultColumns();
+                                                            for (final GwtConfigParameter param : result
+                                                                    .getParameters()) {
+                                                                PropertiesUi.this.channelTable.addColumn(
+                                                                        PropertiesUi.this.getColumnFromParam(param),
+                                                                        new TextHeader(param.getName()));
+                                                            }
+
+                                                            PropertiesUi.this.gwtXSRFService.generateSecurityToken(
+                                                                    new GetChannelDataCallback());
+                                                        }
+                                                    });
+                                        }
+                                    });
+                        }
+
+                    });
+        }
+    }
+
+    private final class GetChannelDataCallback extends BaseAsyncCallback<GwtXSRFToken> {
+
+        @Override
+        public void onSuccess(final GwtXSRFToken result) {
+            PropertiesUi.this.gwtWireService.getGwtChannels(result, PropertiesUi.this.driverDescriptor,
+                    PropertiesUi.this.configurableComponent, new BaseAsyncCallback<List<GwtChannelInfo>>() {
+
+                        @Override
+                        public void onSuccess(List<GwtChannelInfo> result) {
+                            for (GwtChannelInfo channelInfo : result) {
+                                channelInfo.setUnescaped(true);
+                            }
+                            PropertiesUi.this.channelsDataProvider.getList().clear();
+                            PropertiesUi.this.channelsDataProvider.getList().addAll(result);
+                            PropertiesUi.this.channelsDataProvider.refresh();
+                            PropertiesUi.this.channelPanel.setVisible(true);
+                            EntryClassUi.hideWaitModal();
+                        }
+                    });
+        }
     }
 
     @Override
@@ -406,34 +374,24 @@ public class PropertiesUi extends AbstractServicesUi {
             clearChannelsFromConfig();
 
             for (final GwtChannelInfo ci : this.channelsDataProvider.getList()) {
-                StringBuilder prefixBuilder = new StringBuilder(ci.getId());
-                prefixBuilder.append(".");
-                prefixBuilder.append(PROPERTIES_CHANNEL_IDENTIFIER);
-                prefixBuilder.append(".");
+                StringBuilder prefixBuilder = new StringBuilder(ci.getName());
+                prefixBuilder.append(CHANNEL_PROPERTY_SEPARATOR.value());
                 String prefix = prefixBuilder.toString();
 
-                final GwtConfigParameter newName = copyOf(this.baseDriverDescriptor.getParameter(CHANNEL_NAME));
-                newName.setName(prefix + CHANNEL_NAME);
-                newName.setId(prefix + CHANNEL_NAME);
-                newName.setValue(ci.getName());
-                this.configurableComponent.getParameters().add(newName);
-
-                final GwtConfigParameter newType = copyOf(this.baseDriverDescriptor.getParameter(CHANNEL_TYPE));
-                newType.setName(prefix + CHANNEL_TYPE);
-                newType.setId(prefix + CHANNEL_TYPE);
+                final GwtConfigParameter newType = copyOf(
+                        this.baseDriverDescriptor.getParameter(AssetConstants.TYPE.value()));
+                newType.setName(prefix + AssetConstants.TYPE.value());
+                newType.setId(prefix + AssetConstants.TYPE.value());
                 newType.setValue(ci.getType());
                 this.configurableComponent.getParameters().add(newType);
 
                 final GwtConfigParameter newValueType = copyOf(
-                        this.baseDriverDescriptor.getParameter(CHANNEL_VALUE_TYPE));
-                newValueType.setName(prefix + CHANNEL_VALUE_TYPE);
-                newValueType.setId(prefix + CHANNEL_VALUE_TYPE);
+                        this.baseDriverDescriptor.getParameter(AssetConstants.VALUE_TYPE.value()));
+                newValueType.setName(prefix + AssetConstants.VALUE_TYPE.value());
+                newValueType.setId(prefix + AssetConstants.VALUE_TYPE.value());
                 newValueType.setValue(ci.getValueType());
                 this.configurableComponent.getParameters().add(newValueType);
 
-                prefixBuilder.append(PROPERTIES_DRIVER_IDENTIFIER);
-                prefixBuilder.append(".");
-                prefix = prefixBuilder.toString();
                 for (final GwtConfigParameter param : this.driverDescriptor.getParameters()) {
                     final GwtConfigParameter newParam = copyOf(param);
                     newParam.setName(prefix + param.getName());
@@ -483,18 +441,7 @@ public class PropertiesUi extends AbstractServicesUi {
 
         this.channelTable.setHeaderBuilder(new DefaultHeaderOrFooterBuilder<GwtChannelInfo>(this.channelTable, false));
 
-        final Column<GwtChannelInfo, String> c0 = new Column<GwtChannelInfo, String>(new TextCell()) {
-
-            @Override
-            public String getValue(final GwtChannelInfo object) {
-                return object.getId();
-            }
-
-        };
-
-        this.channelTable.addColumn(c0, new TextHeader(MSGS.wiresChannelId()));
-
-        final Column<GwtChannelInfo, String> c = new Column<GwtChannelInfo, String>(new TextInputCell()) {
+        final Column<GwtChannelInfo, String> c = new Column<GwtChannelInfo, String>(new TextCell()) {
 
             @Override
             public String getValue(final GwtChannelInfo object) {
@@ -502,16 +449,6 @@ public class PropertiesUi extends AbstractServicesUi {
             }
 
         };
-
-        c.setFieldUpdater(new FieldUpdater<GwtChannelInfo, String>() {
-
-            @Override
-            public void update(final int index, final GwtChannelInfo object, final String value) {
-                object.setName(value);
-                PropertiesUi.this.setDirty(true);
-                PropertiesUi.this.channelTable.redraw();
-            }
-        });
 
         this.channelTable.addColumn(c, new TextHeader(MSGS.wiresChannelName()));
 
@@ -538,9 +475,8 @@ public class PropertiesUi extends AbstractServicesUi {
         this.channelTable.addColumn(c2, new TextHeader(MSGS.wiresChannelOperation()));
 
         final List<String> valueTypeOptions = Arrays.asList(GwtWiresDataType.BOOLEAN.name(),
-                GwtWiresDataType.BYTE.name(), GwtWiresDataType.BYTE_ARRAY.name(), GwtWiresDataType.DOUBLE.name(),
-                GwtWiresDataType.INTEGER.name(), GwtWiresDataType.LONG.name(), GwtWiresDataType.SHORT.name(),
-                GwtWiresDataType.STRING.name());
+                GwtWiresDataType.BYTE_ARRAY.name(), GwtWiresDataType.FLOAT.name(), GwtWiresDataType.DOUBLE.name(),
+                GwtWiresDataType.INTEGER.name(), GwtWiresDataType.LONG.name(), GwtWiresDataType.STRING.name());
 
         final Column<GwtChannelInfo, String> c3 = new Column<GwtChannelInfo, String>(
                 new SelectionCell(valueTypeOptions)) {
@@ -569,11 +505,9 @@ public class PropertiesUi extends AbstractServicesUi {
         final Iterator<GwtConfigParameter> it = params.iterator();
         while (it.hasNext()) {
             final GwtConfigParameter p = it.next();
-            if (p.getName() != null && p.getName().contains("." + PROPERTIES_CHANNEL_IDENTIFIER + ".")) {
-                final String[] tokens = p.getName().split("\\.");
-                if (tokens.length > 2 && tokens[1].trim().equals(PROPERTIES_CHANNEL_IDENTIFIER)) {
-                    it.remove();
-                }
+            if (p.getName() != null
+                    && p.getName().indexOf(AssetConstants.CHANNEL_PROPERTY_SEPARATOR.value().charAt(0)) != -1) {
+                it.remove();
             }
         }
     }
@@ -599,14 +533,6 @@ public class PropertiesUi extends AbstractServicesUi {
         }
 
         return newParam;
-    }
-
-    private int findNextChannelId() {
-        int channelIndex = 0;
-        for (final GwtChannelInfo ci : this.channelsDataProvider.getList()) {
-            channelIndex = Math.max(channelIndex, Integer.valueOf(ci.getId()));
-        }
-        return channelIndex + 1;
     }
 
     private Column<GwtChannelInfo, String> getColumnFromParam(final GwtConfigParameter param) {
@@ -646,13 +572,13 @@ public class PropertiesUi extends AbstractServicesUi {
                         || min != null && !PropertiesUi.this.validateMin(value, min)) {
                     viewData = cell.getViewData(object);
                     viewData.setInvalid(true);
-                    PropertiesUi.this.nonValidatedCells.add(object.getId());
+                    PropertiesUi.this.nonValidatedCells.add(object.getName());
                     PropertiesUi.this.setNonValidated(true);
                     // We only modified the cell, so do a local redraw.
                     PropertiesUi.this.channelTable.redraw();
                     return;
                 }
-                PropertiesUi.this.nonValidatedCells.remove(object.getId());
+                PropertiesUi.this.nonValidatedCells.remove(object.getName());
                 PropertiesUi.this.setNonValidated(false);
                 PropertiesUi.this.setDirty(true);
                 PropertiesUi.this.channelTable.redraw();
@@ -698,6 +624,69 @@ public class PropertiesUi extends AbstractServicesUi {
         this.incompleteFieldsText.setText(MSGS.formWithErrorsOrIncomplete());
     }
 
+    @SuppressWarnings("unchecked")
+    private void initNewChannelModal() {
+        this.newChannelModal.setTitle(MSGS.wiresCreateNewChannel());
+        this.newChannelNameLabel.setText(MSGS.wiresCreateNewChannelName());
+        this.btnCreateNewChannel.setText(MSGS.addButton());
+        this.btnCancelCreatingNewChannel.setText(MSGS.cancelButton());
+
+        this.newChannelNameInput.addKeyUpHandler(new KeyUpHandler() {
+
+            @Override
+            public void onKeyUp(KeyUpEvent event) {
+                ValidationData isChannelNameValid = validateChannelName(newChannelNameInput.getValue().trim());
+                if (isChannelNameValid.isInvalid()) {
+                    newChannelNameInput.addStyleName(INVALID_CLASS_NAME);
+                    newChannelNameError.setText(isChannelNameValid.getValue());
+                    return;
+                }
+                newChannelNameError.setText("");
+                newChannelNameInput.removeStyleName(INVALID_CLASS_NAME);
+            }
+        });
+
+        this.btnCreateNewChannel.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(final ClickEvent event) {
+                final String newChannelName = newChannelNameInput.getValue().trim();
+
+                ValidationData isChannelNameValid = validateChannelName(newChannelName);
+                if (isChannelNameValid.isInvalid()) {
+                    return;
+                }
+
+                final GwtChannelInfo ci = new GwtChannelInfo();
+                ci.setUnescaped(true);
+                ci.setName(newChannelName);
+                ci.setType(GwtWiresChannelType.READ.name());
+                ci.setValueType(GwtWiresDataType.INTEGER.name());
+                for (final GwtConfigParameter param : PropertiesUi.this.driverDescriptor.getParameters()) {
+                    ci.set(param.getName(), param.getDefault());
+                }
+
+                PropertiesUi.this.channelsDataProvider.getList().add(ci);
+                PropertiesUi.this.channelsDataProvider.refresh();
+                PropertiesUi.this.channelPager.lastPage();
+                PropertiesUi.this.setDirty(true);
+                PropertiesUi.this.newChannelModal.hide();
+            }
+        });
+
+        this.btnRemove.addClickHandler(new ClickHandler() {
+
+            @Override
+            public void onClick(final ClickEvent event) {
+                final GwtChannelInfo ci = PropertiesUi.this.selectionModel.getSelectedObject();
+                PropertiesUi.this.channelsDataProvider.getList().remove(ci);
+                PropertiesUi.this.channelsDataProvider.refresh();
+                PropertiesUi.this.btnRemove.setEnabled(false);
+                PropertiesUi.this.setDirty(true);
+            }
+        });
+    }
+
     private boolean validateMax(final String value, final String maximum) {
         final int val = Integer.parseInt(value);
         final int max = Integer.parseInt(maximum);
@@ -714,6 +703,60 @@ public class PropertiesUi extends AbstractServicesUi {
             return true;
         }
         return false;
+    }
+
+    private ValidationData validateChannelName(final String channelName) {
+        ValidationData result = new ValidationData();
+
+        if (channelName.isEmpty()) {
+            result.setInvalid(true);
+            result.setValue(MSGS.wiresChannelNameEmpty());
+            return result;
+        }
+
+        final String prohibitedChars = AssetConstants.CHANNEL_NAME_PROHIBITED_CHARS.value();
+
+        for (int i = 0; i < prohibitedChars.length(); i++) {
+            final char prohibitedChar = prohibitedChars.charAt(i);
+            if (channelName.indexOf(prohibitedChar) != -1) {
+                result.setInvalid(true);
+                result.setValue(MSGS.wiresChannelNameInvalidCharacters() + " \'" + prohibitedChar + '\'');
+                return result;
+            }
+        }
+
+        if (channelName.indexOf(' ') != -1) {
+            result.setInvalid(true);
+            result.setValue(MSGS.wiresChannelNameNoSpaces());
+            return result;
+        }
+
+        if (channelExists(channelName)) {
+            result.setInvalid(true);
+            result.setValue(MSGS.wiresChannelNameAlreadyPresent());
+            return result;
+        }
+
+        result.setInvalid(false);
+        return result;
+    }
+
+    private boolean channelExists(String channelName) {
+        for (GwtChannelInfo channelInfo : channelsDataProvider.getList()) {
+            if (channelName.equals(channelInfo.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private String getNewChannelName() {
+        int suffix = 1;
+        String result = null;
+        while (channelExists(result = MSGS.wiresChannel() + suffix)) {
+            suffix++;
+        }
+        return result;
     }
 
     private boolean validateType(final GwtConfigParameterType param, final String value) {
@@ -804,4 +847,5 @@ public class PropertiesUi extends AbstractServicesUi {
             return false;
         }
     }
+
 }

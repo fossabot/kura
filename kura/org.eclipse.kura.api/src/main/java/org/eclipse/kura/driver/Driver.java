@@ -17,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.kura.KuraRuntimeException;
-import org.eclipse.kura.driver.listener.DriverListener;
+import org.eclipse.kura.channel.ChannelRecord;
+import org.eclipse.kura.channel.listener.ChannelListener;
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * The Interface Driver is the main interface that all Kura specific
@@ -28,12 +30,19 @@ import org.eclipse.kura.driver.listener.DriverListener;
  * configurable component of the actual driver which is internally managed by
  * the OSGi Configuration Admin service
  *
- * @see DriverRecord
+ * @see ChannelRecord
  * @see ChannelDescriptor
  *
  * @noimplement This interface is not intended to be implemented by clients.
+ * @since 1.2
  */
+@ProviderType
 public interface Driver {
+
+    /**
+     * Each driver is identified by the value of this property in the Component Configuration
+     */
+    public static final String DRIVER_PID_PROPERTY_NAME = "driver.pid";
 
     /**
      * The Class ConnectionException is a driver specific exception which is
@@ -116,10 +125,10 @@ public interface Driver {
     public ChannelDescriptor getChannelDescriptor();
 
     /**
-     * Reads the communication channels that correspond to the given driver
-     * records. The read result is returned by setting the value in the driver
+     * Reads the communication channels that correspond to the given channel
+     * records. The read result is returned by setting the value in the channel
      * record. If for some reason no value can be read the value should be set
-     * anyways. In this case the driver flag needs to be specified in the driver
+     * anyways. In this case the channel flag needs to be specified in the channel
      * record. The flag shall best describe the reason of failure. If no value
      * is set the default error code is
      * {@code DriverFlag#DRIVER_ERROR_UNSPECIFIED}. If the connection to the
@@ -131,8 +140,6 @@ public interface Driver {
      *            the records hold the information of what channels are to be
      *            read. They will be filled by this function with the records
      *            already read.
-     * @return the list of driver records which comprises the currently read
-     *         value in case of success or the reason of failure
      * @throws ConnectionException
      *             if the connection to the field device is interrupted
      * @throws NullPointerException
@@ -144,10 +151,10 @@ public interface Driver {
      *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
      *             needs to be set in the thrown {@link KuraRuntimeException}
      */
-    public List<DriverRecord> read(List<DriverRecord> records) throws ConnectionException;
+    public void read(List<ChannelRecord> records) throws ConnectionException;
 
     /**
-     * Registers driver listener for the provided channel configuration for a
+     * Registers channel listener for the provided channel configuration for a
      * monitor operation on it.
      *
      * @param channelConfig
@@ -163,11 +170,11 @@ public interface Driver {
      *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
      *             needs to be set in the thrown {@link KuraRuntimeException}
      */
-    public void registerDriverListener(Map<String, Object> channelConfig, DriverListener listener)
+    public void registerChannelListener(Map<String, Object> channelConfig, ChannelListener listener)
             throws ConnectionException;
 
     /**
-     * Unregisters a already registered driver listener which has been
+     * Unregisters a already registered channel listener which has been
      * registered for a monitor operation.
      *
      * @param listener
@@ -181,12 +188,12 @@ public interface Driver {
      *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
      *             needs to be set in the thrown {@link KuraRuntimeException}
      */
-    public void unregisterDriverListener(DriverListener listener) throws ConnectionException;
+    public void unregisterChannelListener(ChannelListener listener) throws ConnectionException;
 
     /**
-     * Writes the data channels that correspond to the given driver records. The
+     * Writes the data channels that correspond to the given channel records. The
      * write result is returned by setting the driver flag
-     * {@code DriverFlag#WRITE_SUCCESSFUL} in the driver records. If the
+     * {@code ChannelFlag#SUCCESS} in the channel records. If the
      * connection to the asset is interrupted, then any necessary resources that
      * correspond to this connection should be cleaned up and a
      * {@code ConnectionException} shall be thrown.
@@ -196,8 +203,6 @@ public interface Driver {
      *            written and the values that are to written. They will be
      *            filled by this function with a driver flag stating whether the
      *            write process was successful or not.
-     * @return the list of driver records which comprises the status of the
-     *         write operations
      * @throws ConnectionException
      *             if the connection to the field device is interrupted
      * @throws NullPointerException
@@ -209,6 +214,29 @@ public interface Driver {
      *             error code {@code KuraErrorCode#OPERATION_NOT_SUPPORTED}
      *             needs to be set in the thrown {@link KuraRuntimeException}
      */
-    public List<DriverRecord> write(List<DriverRecord> records) throws ConnectionException;
+    public void write(List<ChannelRecord> records) throws ConnectionException;
 
+    /**
+     * This method allows the driver to perform protocol specific optimizations in order to accelerate the execution of
+     * batches of read requests having the same channel configuration.
+     * The result of this optimization will be returned by the driver as a {@link PreparedRead} instance that can be
+     * used to perform the requests.
+     * In order to improve efficiency a driver should validate the channel configuration of the provided channels during
+     * this method call.
+     * It is also permitted to the implementation of the {@link PreparedRead#execute()} and
+     * {@link PreparedRead#getChannelRecords()} methods to return the same {@link ChannelRecord} instances provided as
+     * an
+     * argument to this method.
+     * If the validation of the channel configuration fails for some channels, the driver must not throw an exception
+     * but it is required to return channel records with proper error flags set as a result of the
+     * {@link PreparedRead#execute()} call.
+     * 
+     * @see PreparedRead
+     * @param records
+     *            The list of channel records that represent the request to be optimized.
+     * @return The {@link PreparedRead} instance
+     * @throws NullPointerException
+     *             if the provided list is null
+     */
+    public PreparedRead prepareRead(List<ChannelRecord> records);
 }

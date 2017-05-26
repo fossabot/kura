@@ -23,7 +23,7 @@ var kuraWires = (function() {
 	var paperScaleMax = 1.5;
 	var paperScaleMin = .5;
 	var paperScaling = .2;
-	var selectedElement, oldSelectedPid;
+	var selectedElement;
 	var oldCellView;
 	var elementsContainerTemp = [];
 	var eventSourceSessionId; // Server Sent Events Session ID
@@ -31,6 +31,7 @@ var kuraWires = (function() {
 	// Graph if any instance is recently deleted.
 	var isComponentDeleted;
 	var eventSource;
+	var selectionRefreshPending = false;
 
 	/*
 	 * / Public functions
@@ -44,26 +45,33 @@ var kuraWires = (function() {
 	};
 	
 	client.unload = function() {
-		eventSource.close();
-		eventSource = null;
-		var xmlHttp = new XMLHttpRequest();
-	    xmlHttp.open("GET", "/sse?session="
-				+ eventSourceSessionId + "&logout=" + eventSourceSessionId, true);
-	    xmlHttp.send(null);
-	};
-
-	function generateId() {
-		return new Date().getTime()
-	}
-
-	$(document).ready(function() {
-		$(window).bind("beforeunload", function() {
+		if(typeof(EventSource) !== "undefined") {
 			eventSource.close();
 			eventSource = null;
 			var xmlHttp = new XMLHttpRequest();
 		    xmlHttp.open("GET", "/sse?session="
 					+ eventSourceSessionId + "&logout=" + eventSourceSessionId, true);
 		    xmlHttp.send(null);
+		}
+	};
+
+	function generateId() {
+		return new Date().getTime()
+	}
+	
+	client.selectionCompleted = function() {
+		selectionRefreshPending = false;
+	}
+
+	$(document).ready(function() {
+		$(window).bind("beforeunload", function() {
+			if(typeof(EventSource) !== "undefined") {
+				eventSource.close();
+				eventSource = null;
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.open("GET", "/sse?session=" + eventSourceSessionId + "&logout=" + eventSourceSessionId, true);
+				xmlHttp.send(null);
+			}
 		});
 	});
 	
@@ -82,7 +90,7 @@ var kuraWires = (function() {
 	};
 
 	var removeCellFunc = function(cell) {
-		top.jsniMakeUiDirty();
+		jsniMakeUiDirty();
 		var _elements = graph.getElements();
 		if (_elements.length == 0) {
 			toggleDeleteGraphButton(true);
@@ -95,7 +103,7 @@ var kuraWires = (function() {
 	 * Interaction with OSGi Event Admin through Server Sent Events
 	 */
 	function sse() {
-		if(eventSource == null) {
+		if(typeof(EventSource) !== "undefined" && eventSource == null) {
 			eventSourceSessionId = generateId();
 			eventSource = new EventSource("/sse?session=" + eventSourceSessionId);
 			eventSource.onmessage = function(event) {
@@ -125,7 +133,7 @@ var kuraWires = (function() {
 			}
 		}
 		if (isCycleExists) {
-			top.jsniShowCycleExistenceError();
+			jsniShowCycleExistenceError();
 		}
 		return isCycleExists;
 	}
@@ -155,7 +163,6 @@ var kuraWires = (function() {
 		// GWT entry point to be called
 		// Instantiate JointJS graph and paper
 		if (!initialized) {
-			$("#btn-create-comp").on("click", createNewComponent);
 			$("#btn-create-comp-cancel").on("click", cancelCreateNewComponent);
 			$("#btn-save-graph").on("click", saveConfig);
 			$("#btn-delete-comp").on("click", deleteComponent);
@@ -214,7 +221,7 @@ var kuraWires = (function() {
 		for (var i = 0; i < _elements.length; i++) {
 			var elem = _elements[i];
 			elem.on('change:position', function() {
-				top.jsniMakeUiDirty();
+				jsniMakeUiDirty();
 			})
 		}
 
@@ -228,7 +235,7 @@ var kuraWires = (function() {
 
 		graph.on('change:source change:target', function(link) {
 			createWire(link);
-			top.jsniMakeUiDirty();
+			jsniMakeUiDirty();
 		});
 
 		graph.on('remove', removeCellFunc);
@@ -238,25 +245,29 @@ var kuraWires = (function() {
 			var factoryPid = cellView.model.attributes.factoryPid;
 			selectedElement = cellView.model;
 			if (oldCellView != null) {
+				jsniUpdateSelection("", "");
 				oldCellView.unhighlight();
 				oldCellView = null;
 			}
-			if (typeof cellView !== 'undefined'
-					&& typeof cellView.sourceBBox === 'undefined') {
-				if (oldSelectedPid !== pid) {
-					top.jsniUpdateSelection(pid, factoryPid);
-					oldSelectedPid = pid;
+		});
+
+		paper.on('cell:pointerup', function(cellView, evt, x, y) {
+			var pid = cellView.model.attributes.label;
+			var factoryPid = cellView.model.attributes.factoryPid;
+			if (typeof cellView.sourceBBox === 'undefined') {
+				if (!selectionRefreshPending) {
+					selectionRefreshPending = true;
+					jsniUpdateSelection(pid, factoryPid);
 					isUpdateSelectionTriggered = true;
 				}
 				cellView.highlight();
 				oldCellView = cellView;
 			}
 		});
-
+		
 		paper.on('blank:pointerdown', function(cellView, evt, x, y) {
-			top.jsniUpdateSelection("", "");
+			jsniUpdateSelection("", "");
 			selectedElement = "";
-			oldSelectedPid = null;
 			if (oldCellView != null) {
 				oldCellView.unhighlight();
 				oldCellView = null;
@@ -291,7 +302,7 @@ var kuraWires = (function() {
 					x : x,
 					y : y,
 				};
-				createComponent(compConfig);
+				createComponent(compConfig, false);
 			}
 			createExisitingWires();
 		}
@@ -438,10 +449,10 @@ var kuraWires = (function() {
 		}
 	}
 
-	/*
-	 * / Create a new component
+	/**
+	 * Create a new component
 	 */
-	function createComponent(comp) {
+	function createComponent(comp, flag) {
 
 		if (comp.name === "") {
 			comp.name = comp.pid;
@@ -458,7 +469,7 @@ var kuraWires = (function() {
 		});
 
 		if (isFoundExistingElementWithSamePid) {
-			top.jsniShowDuplicatePidModal(name);
+			jsniShowDuplicatePidModal(name);
 			return;
 		}
 
@@ -510,7 +521,7 @@ var kuraWires = (function() {
 		});
 
 		rect.on('change:position', function() {
-			top.jsniMakeUiDirty();
+			jsniMakeUiDirty();
 		})
 
 		/* custom highlighting for ports */
@@ -557,12 +568,16 @@ var kuraWires = (function() {
 			xPos = 300;
 			yPos = 300;
 		}
-
+		
+		if (flag) {
+			selectedElement = rect;
+			jsniUpdateSelection(comp.name, comp.fPid);
+		}
 		return rect.attributes.id;
 	}
 
-	/*
-	 * / Event Functions
+	/**
+	 * Event Functions
 	 */
 	function saveConfig() {
 		graphToSave = prepareJsonFromGraph();
@@ -572,7 +587,7 @@ var kuraWires = (function() {
 		elementsContainerTemp = [];
 		isComponentDeleted = false;
 		if (!checkForCycleExistence()) {
-			top.jsniUpdateWireConfig(JSON.stringify(newConfig));
+			jsniUpdateWireConfig(JSON.stringify(newConfig));
 		}
 	}
 
@@ -666,7 +681,7 @@ var kuraWires = (function() {
 			if (i != -1) {
 				elementsContainerTemp.splice(i, 1);
 			}
-			top.jsniUpdateSelection("", "");
+			jsniUpdateSelection(pid, "");
 			if (clientConfig.wireComponentsJson.length !== "0") {
 				isComponentDeleted = true;
 			}
@@ -695,14 +710,10 @@ var kuraWires = (function() {
 	}
 
 	function cancelCreateNewComponent() {
-		top.jsniDeactivateNavPils();
+		jsniDeactivateNavPils();
 	}
 
 	function createNewComponent() {
-		if (isComponentDeleted) {
-			top.jsniShowAddNotAllowedModal();
-			return;
-		}
 		var newComp;
 		// Determine whether component can be producer, consumer, or both
 		fPid = $("#factoryPid").val();
@@ -720,7 +731,7 @@ var kuraWires = (function() {
 		});
 
 		if (isFoundExistingElementWithSamePid) {
-			top.jsniShowDuplicatePidModal(name);
+			jsniShowDuplicatePidModal(name);
 			return;
 		}
 
@@ -756,17 +767,19 @@ var kuraWires = (function() {
 					y : yPos
 				}
 			}
-			top.jsniMakeUiDirty();
-			top.jsniDeactivateNavPils();
+			jsniMakeUiDirty();
+			jsniDeactivateNavPils();
 			toggleDeleteGraphButton(false);
 			// Create the new component and store information in array
-			createComponent(newComp);
+			createComponent(newComp, true);
 			$("#componentName").val('');
 			$("#driverPids").val('--- Select Driver ---');
 			$("#factoryPid").val('');
 			$("#asset-comp-modal").modal('hide');
 		}
 	}
+	
+	client.createNewComponent = createNewComponent;
 
 	/*
 	 * / Setup Custom Elements

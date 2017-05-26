@@ -26,7 +26,7 @@
             type="String"
             cardinality="0"
             required="true"
-            default="APP"
+            default="W1"
             description="Application topic prefix to be used when publishing messages.">
         </AD>
 
@@ -35,7 +35,7 @@
             type="String"
             cardinality="0"
             required="true"
-            default="EVENT"
+            default="A1/$assetName"
             description="Application portion of the topic to be used when publishing messages.">
         </AD>
         
@@ -63,7 +63,7 @@
             type="Integer"
             cardinality="0"
             required="false"
-            default="1"
+            default="0"
             description="An integer specifying the quality of service the message was published on.">
             <Option label="0" value="0"/>
             <Option label="1" value="1"/>
@@ -77,17 +77,6 @@
             required="true"
             default="false"
             description="Whether or not the broker should retain the message">
-        </AD>
-        
-         <AD id="publish.payload.type"
-            name="publish.payload.type"
-            type="Integer"
-            cardinality="0"
-            required="true"
-            default="1"
-            description="Option to control whether the wire records will be wrapped into a Kura Payload or a JSON message">
-            <Option label="Kura Payload" value="1" />
-            <Option label="JSON" value="2" />
         </AD>
     </OCD>
     

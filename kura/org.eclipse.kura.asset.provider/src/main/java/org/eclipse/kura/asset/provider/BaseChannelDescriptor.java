@@ -13,9 +13,9 @@
  *******************************************************************************/
 package org.eclipse.kura.asset.provider;
 
-import static org.eclipse.kura.asset.AssetConstants.NAME;
-import static org.eclipse.kura.asset.AssetConstants.TYPE;
-import static org.eclipse.kura.asset.AssetConstants.VALUE_TYPE;
+import static org.eclipse.kura.asset.provider.AssetConstants.NAME;
+import static org.eclipse.kura.asset.provider.AssetConstants.TYPE;
+import static org.eclipse.kura.asset.provider.AssetConstants.VALUE_TYPE;
 
 import java.util.List;
 
@@ -51,8 +51,7 @@ import org.eclipse.kura.util.collection.CollectionUtil;
  * <ul>
  * <li>INTEGER</li>
  * <li>DOUBLE</li>
- * <li>BYTE</li>
- * <li>SHORT</li>
+ * <li>FLOAT</li>
  * <li>LONG</li>
  * <li>BOOLEAN</li>
  * <li>STRING</li>

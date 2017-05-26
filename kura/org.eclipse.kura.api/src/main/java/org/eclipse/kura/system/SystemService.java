@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 Eurotech and/or its affiliates
+ * Copyright (c) 2011, 2017 Eurotech and/or its affiliates
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -21,12 +21,16 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import org.osgi.annotation.versioning.ProviderType;
 import org.osgi.framework.Bundle;
 
 /**
  * Service to provide basic system information including Operating System
  * information, JVM information and filesystem information.
+ * 
+ * @noimplement This interface is not intended to be implemented by clients.
  */
+@ProviderType
 public interface SystemService {
 
     public static final String KURA_CONFIG = "kura.configuration";
@@ -52,6 +56,9 @@ public interface SystemService {
     public static final String KEY_PRIMARY_NET_IFACE = "kura.primary.network.interface";
     public static final String KEY_KURA_HOME_DIR = "kura.home";
     public static final String KEY_KURA_PLUGINS_DIR = "kura.plugins";
+    /**
+	 * @since 1.2
+	 */
     public static final String KEY_KURA_PACKAGES_DIR = "kura.packages";
     public static final String KEY_KURA_DATA_DIR = "kura.data";
     public static final String KEY_KURA_TMP_DIR = "kura.tmp";
@@ -298,7 +305,7 @@ public interface SystemService {
 
     /**
      * Returns the maximum number of snapshots to be retained in the file system.
-     * When the maximum number is reached, a garbage collector will deleted the older snapshots.
+     * When the maximum number is reached, a garbage collector will delete the older snapshots.
      *
      * @return maximum number of snapshots to be retained.
      */

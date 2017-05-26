@@ -81,8 +81,11 @@ public interface OpcUaMessages {
     @En("OPC-UA Read Operation Failed")
     public String readFailed();
 
-    @En("Driver Record cannot be null")
+    @En("Channel Record cannot be null")
     public String recordNonNull();
+
+    @En("Channel Record list cannot be null")
+    public String recordListNonNull();
 
     @En("Updating OPC-UA Driver.....")
     public String updating();
@@ -105,9 +108,16 @@ public interface OpcUaMessages {
     @En("Searching for endpoints")
     public String searchingEndpoints();
 
-    @En("Got bad status: ")
-    public String errorBadResultStatus();
+    @En("Got Bad Status: {0}")
+    public String errorBadResultStatus(long statusCode);
 
-    @En("Operation result is null")
+    @En("Operation Result cannot be null")
     public String errorNullResult();
+
+    @En("Operation Result Status cannot be null")
+    public String errorNullStatus();
+
+    @En("Operation Result Variant cannot be null")
+    public String errorNullVariant();
+
 }

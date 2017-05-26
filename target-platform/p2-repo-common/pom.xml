@@ -6,11 +6,10 @@
 	<parent>
 		<groupId>org.eclipse.kura</groupId>
 		<artifactId>target-platform</artifactId>
-		<version>3.0.0-SNAPSHOT</version>
+		<version>3.1.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>p2-repo-common</artifactId>
-	<version>1.0.0</version>
 	<packaging>pom</packaging>
 
 	<build>
@@ -58,22 +57,12 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.eclipse.kura</groupId>
-									<artifactId>com.codeminders.hidapi.armv5sf</artifactId>
-									<version>${com.codeminders.hidapi.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.eclipse.kura</groupId>
 									<artifactId>com.codeminders.hidapi.armv6hf</artifactId>
 									<version>${com.codeminders.hidapi.version}</version>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.eclipse.kura</groupId>
 									<artifactId>com.codeminders.hidapi.x86_64</artifactId>
-									<version>${com.codeminders.hidapi.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.eclipse.kura</groupId>
-									<artifactId>com.codeminders.hidapi.x86</artifactId>
 									<version>${com.codeminders.hidapi.version}</version>
 								</artifactItem>
 								<artifactItem>
@@ -141,26 +130,16 @@
 									<artifactId>jdk.dio</artifactId>
 									<version>${jdk.dio.version}</version>
 								</artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>jdk.dio.armv5sf</artifactId>
-                                    <version>${jdk.dio.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>jdk.dio.armv6hf</artifactId>
-                                    <version>${jdk.dio.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>jdk.dio.x86</artifactId>
-                                    <version>${jdk.dio.version}</version>
-                                </artifactItem>
-                                <artifactItem>
-                                    <groupId>org.eclipse.kura</groupId>
-                                    <artifactId>jdk.dio.x86_64</artifactId>
-                                    <version>${jdk.dio.version}</version>
-                                </artifactItem>
+								<artifactItem>
+									<groupId>org.eclipse.kura</groupId>
+									<artifactId>jdk.dio.armv6hf</artifactId>
+									<version>${jdk.dio.version}</version>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.eclipse.kura</groupId>
+									<artifactId>jdk.dio.x86_64</artifactId>
+									<version>${jdk.dio.version}</version>
+								</artifactItem>
 								<artifactItem>
 									<groupId>org.slf4j</groupId>
 									<artifactId>slf4j-api</artifactId>
@@ -197,8 +176,8 @@
 									<version>${slf4j.log4j12.version}</version>
 								</artifactItem>
 								<artifactItem>
-									<groupId>org.apache</groupId>
-									<artifactId>org.apache.commons.fileupload</artifactId>
+									<groupId>commons-fileupload</groupId>
+									<artifactId>commons-fileupload</artifactId>
 									<version>${org.apache.commons.fileupload.version}</version>
 								</artifactItem>
 								<artifactItem>
@@ -228,17 +207,7 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.eclipse.kura</groupId>
-									<artifactId>org.eclipse.soda.dk.comm.armv5sf</artifactId>
-									<version>${org.eclipse.soda.dk.comm.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.eclipse.kura</groupId>
 									<artifactId>org.eclipse.soda.dk.comm.armv6hf</artifactId>
-									<version>${org.eclipse.soda.dk.comm.version}</version>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.eclipse.kura</groupId>
-									<artifactId>org.eclipse.soda.dk.comm.x86</artifactId>
 									<version>${org.eclipse.soda.dk.comm.version}</version>
 								</artifactItem>
 								<artifactItem>
@@ -277,6 +246,11 @@
 									<version>${org.eclipse.kura.windows.launcher.version}</version>
 
 								</artifactItem>-->
+								<artifactItem>
+									<groupId>org.osgi</groupId>
+									<artifactId>osgi.annotation</artifactId>
+									<version>${osgi.annotation.version}</version>
+								</artifactItem>
 							</artifactItems>
 							<stripVersion>true</stripVersion>
 							<outputDirectory>${project.basedir}/target/source/plugins</outputDirectory>
@@ -297,10 +271,8 @@
 						<configuration>
 							<tasks>
 							    <move file="target/source/plugins/com.codeminders.hidapi.jar" tofile="target/source/plugins/com.codeminders.hidapi_${com.codeminders.hidapi.version}.jar"/>
-							    <move file="target/source/plugins/com.codeminders.hidapi.armv5sf.jar" tofile="target/source/plugins/com.codeminders.hidapi.armv5sf_${com.codeminders.hidapi.version}.jar"/>
 							    <move file="target/source/plugins/com.codeminders.hidapi.armv6hf.jar" tofile="target/source/plugins/com.codeminders.hidapi.armv6hf_${com.codeminders.hidapi.version}.jar"/>
 							    <move file="target/source/plugins/com.codeminders.hidapi.x86_64.jar" tofile="target/source/plugins/com.codeminders.hidapi.x86_64_${com.codeminders.hidapi.version}.jar"/>
-							    <move file="target/source/plugins/com.codeminders.hidapi.x86.jar" tofile="target/source/plugins/com.codeminders.hidapi.x86_${com.codeminders.hidapi.version}.jar"/>
 								<move file="target/source/plugins/org.apache.commons.net.jar" tofile="target/source/plugins/org.apache.commons.net_${org.apache.commons.net.version}.jar"/>
 								<move file="target/source/plugins/commons-exec.jar" tofile="target/source/plugins/org.apache.commons.exec_${org.apache.commons.exec.version}.jar"/>
 								<move file="target/source/plugins/com.google.protobuf.jar" tofile="target/source/plugins/com.google.protobuf_${com.google.protobuf.version}.jar"/>
@@ -313,10 +285,8 @@
 								<move file="target/source/plugins/org.usb4java.jar" tofile="target/source/plugins/org.usb4java_${org.usb4java.version}.jar"/>
 								<move file="target/source/plugins/org.hsqldb.hsqldb.jar" tofile="target/source/plugins/org.hsqldb.hsqldb_${org.hsqldb.hsqldb.version}.jar"/>
 								<move file="target/source/plugins/jdk.dio.jar" tofile="target/source/plugins/jdk.dio_${jdk.dio.version}.jar"/>
-								<move file="target/source/plugins/jdk.dio.armv5sf.jar" tofile="target/source/plugins/jdk.dio.armv5sf_${jdk.dio.version}.jar"/>
 								<move file="target/source/plugins/jdk.dio.armv6hf.jar" tofile="target/source/plugins/jdk.dio.armv6hf_${jdk.dio.version}.jar"/>
 								<move file="target/source/plugins/jdk.dio.x86_64.jar" tofile="target/source/plugins/jdk.dio.x86_64_${jdk.dio.version}.jar"/>
-								<move file="target/source/plugins/jdk.dio.x86.jar" tofile="target/source/plugins/jdk.dio.x86_${jdk.dio.version}.jar"/>
 								<move file="target/source/plugins/slf4j-api.jar" tofile="target/source/plugins/slf4j.api_${slf4j.api.version}.jar"/>
 								<move file="target/source/plugins/log4j.jar" tofile="target/source/plugins/log4j_${log4j.version}.jar"/>
 								<move file="target/source/plugins/org.junit.jar" tofile="target/source/plugins/org.junit_${org.junit.version}.jar"/>
@@ -324,20 +294,19 @@
 								<move file="target/source/plugins/log4j.apache-log4j-extras.jar" tofile="target/source/plugins/log4j.apache-log4j-extras_${log4j.apache-log4j-extras.version}.jar"/>
 								<move file="target/source/plugins/slf4j-log4j12.jar" tofile="target/source/plugins/slf4j.log4j12_${slf4j.log4j12.version}.jar"/>
 								<move file="target/source/plugins/jcl-over-slf4j.jar" tofile="target/source/plugins/jcl-over-slf4j_${jcl.over.slf4j.version}.jar"/>
-								<move file="target/source/plugins/org.apache.commons.fileupload.jar" tofile="target/source/plugins/org.apache.commons.fileupload_${org.apache.commons.fileupload.version}.jar"/>
+								<move file="target/source/plugins/commons-fileupload.jar" tofile="target/source/plugins/commons-fileupload.jar_${org.apache.commons.fileupload.version}.jar"/>
 								<move file="target/source/plugins/usb4java-javax.jar" tofile="target/source/plugins/usb4java-javax_${usb4java-javax.version}.jar"/>
 								<move file="target/source/plugins/org.apache.commons.io.jar" tofile="target/source/plugins/org.apache.commons.io_${org.apache.commons.io.version}.jar"/>
 								<move file="target/source/plugins/org.apache.commons.lang3.jar" tofile="target/source/plugins/org.apache.commons.lang3_${org.apache.commons.lang3.version}.jar"/>
 								<move file="target/source/plugins/org.eclipse.soda.dk.comm.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm_${org.eclipse.soda.dk.comm.version}.jar"/>
-								<move file="target/source/plugins/org.eclipse.soda.dk.comm.armv5sf.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm.armv5sf_${org.eclipse.soda.dk.comm.version}.jar"/>
 								<move file="target/source/plugins/org.eclipse.soda.dk.comm.armv6hf.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm.armv6hf_${org.eclipse.soda.dk.comm.version}.jar"/>
-								<move file="target/source/plugins/org.eclipse.soda.dk.comm.x86.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm.x86_${org.eclipse.soda.dk.comm.version}.jar"/>
 								<move file="target/source/plugins/org.eclipse.soda.dk.comm.x86_64.jar" tofile="target/source/plugins/org.eclipse.soda.dk.comm.x86_64_${org.eclipse.soda.dk.comm.version}.jar"/>
 								<move file="target/source/plugins/camel-core.jar" tofile="target/source/plugins/org.apache.camel.camel-core_${org.apache.camel.camel-core.version}.jar"/>
 								<move file="target/source/plugins/camel-stream.jar" tofile="target/source/plugins/org.apache.camel.camel-stream_${org.apache.camel.camel-stream.version}.jar"/>
 								<move file="target/source/plugins/camel-core-osgi.jar" tofile="target/source/plugins/org.apache.camel.camel-core-osgi_${org.apache.camel.camel-core-osgi.version}.jar"/>
 								<move file="target/source/plugins/camel-kura.jar" tofile="target/source/plugins/org.apache.camel.camel-kura_${org.apache.camel.camel-kura.version}.jar"/>
 								<move file="target/source/plugins/minimal-json.jar" tofile="target/source/plugins/minimal-json_${com.eclipsesource.minimal-json.version}.jar"/>
+								<move file="target/source/plugins/osgi.annotation.jar" tofile="target/source/plugins/osgi.annotation_${osgi.annotation.version}.jar"/>
 								<!--<move file="target/source/plugins/org.eclipse.kura.windows.system.jar" tofile="target/source/plugins/org.eclipse.kura.windows.system_${org.eclipse.kura.windows.system.version}.jar"/>
 								<move file="target/source/plugins/org.eclipse.kura.windows.launcher.jar" tofile="target/source/plugins/org.eclipse.kura.windows.launcher_${org.eclipse.kura.windows.launcher.version}.jar"/>-->
 							</tasks>

@@ -11,8 +11,14 @@
  *******************************************************************************/
 package org.eclipse.kura.net.wifi;
 
-import java.util.Set;
+import java.util.EnumSet;
 
+import org.osgi.annotation.versioning.ProviderType;
+
+/**
+ * @noextend This class is not intended to be subclassed by clients.
+ */
+@ProviderType
 public class WifiHotspotInfo {
 
     private final String ssid;
@@ -21,8 +27,8 @@ public class WifiHotspotInfo {
     private final int channel;
     private final int frequency;
     private final WifiSecurity security;
-    private Set<WifiSecurity> pairCiphers;
-    private Set<WifiSecurity> groupCiphers;
+    private EnumSet<WifiSecurity> pairCiphers;
+    private EnumSet<WifiSecurity> groupCiphers;
 
     public WifiHotspotInfo(String ssid, String macAddress, int signalLevel, int channel, int frequency,
             WifiSecurity security) {
@@ -36,7 +42,7 @@ public class WifiHotspotInfo {
     }
 
     public WifiHotspotInfo(String ssid, String macAddress, int signalLevel, int channel, int frequency,
-            WifiSecurity security, Set<WifiSecurity> pairCiphers, Set<WifiSecurity> groupCiphers) {
+            WifiSecurity security, EnumSet<WifiSecurity> pairCiphers, EnumSet<WifiSecurity> groupCiphers) {
         this(ssid, macAddress, signalLevel, channel, frequency, security);
         this.pairCiphers = pairCiphers;
         this.groupCiphers = groupCiphers;
@@ -66,19 +72,25 @@ public class WifiHotspotInfo {
         return this.security;
     }
 
-    public Set<WifiSecurity> getPairCiphers() {
+    public EnumSet<WifiSecurity> getPairCiphers() {
         return this.pairCiphers;
     }
 
-    public Set<WifiSecurity> getGroupCiphers() {
+    public EnumSet<WifiSecurity> getGroupCiphers() {
         return this.groupCiphers;
     }
 
-    public void setPairCiphers(Set<WifiSecurity> pairCiphers) {
+    /**
+	 * @since 1.2
+	 */
+    public void setPairCiphers(EnumSet<WifiSecurity> pairCiphers) {
         this.pairCiphers = pairCiphers;
     }
 
-    public void setGroupCiphers(Set<WifiSecurity> groupCiphers) {
+    /**
+	 * @since 1.2
+	 */
+    public void setGroupCiphers(EnumSet<WifiSecurity> groupCiphers) {
         this.groupCiphers = groupCiphers;
     }
 

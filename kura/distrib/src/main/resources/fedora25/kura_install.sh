@@ -70,7 +70,7 @@ cp ${INSTALL_DIR}/kura/install/kuranet.conf ${INSTALL_DIR}/kura/.data/kuranet.co
 
 OLD_PATH=$(pwd)
 SELINUX_KURA=$(semodule -l | grep selinuxKura)
-if [ -z $SELINUX_KURA ]; then
+if [ -z "$SELINUX_KURA" ]; then
 	echo "Applying semodule..."
 	cd ${INSTALL_DIR}/kura/install/
     semodule -i selinuxKura.pp
@@ -106,4 +106,15 @@ cp ${INSTALL_DIR}/kura/install/kura-tmpfiles.conf /usr/lib/tmpfiles.d/kura.conf
 # execute patch_sysctl.sh from installer install folder
 chmod 700 ${INSTALL_DIR}/kura/install/patch_sysctl.sh 
 ${INSTALL_DIR}/kura/install/patch_sysctl.sh ${INSTALL_DIR}/kura/install/sysctl.kura.conf /etc/sysctl.conf
-sysctl -p
+
+if ! [ -d /sys/class/net ]
+then
+ sysctl -p || true
+else
+ sysctl -w net.ipv6.conf.all.disable_ipv6=1
+ sysctl -w net.ipv6.conf.default.disable_ipv6=1
+ for INTERFACE in $(ls /sys/class/net)
+ do
+ 	sysctl -w net.ipv6.conf.${INTERFACE}.disable_ipv6=1
+ done
+fi

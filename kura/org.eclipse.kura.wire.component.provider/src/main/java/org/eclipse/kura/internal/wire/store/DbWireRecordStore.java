@@ -24,15 +24,12 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.kura.configuration.ConfigurableComponent;
 import org.eclipse.kura.db.DbService;
@@ -42,12 +39,11 @@ import org.eclipse.kura.localization.LocalizationAdapter;
 import org.eclipse.kura.localization.resources.WireMessages;
 import org.eclipse.kura.type.BooleanValue;
 import org.eclipse.kura.type.ByteArrayValue;
-import org.eclipse.kura.type.ByteValue;
 import org.eclipse.kura.type.DataType;
 import org.eclipse.kura.type.DoubleValue;
+import org.eclipse.kura.type.FloatValue;
 import org.eclipse.kura.type.IntegerValue;
 import org.eclipse.kura.type.LongValue;
-import org.eclipse.kura.type.ShortValue;
 import org.eclipse.kura.type.StringValue;
 import org.eclipse.kura.type.TypedValue;
 import org.eclipse.kura.util.collection.CollectionUtil;
@@ -64,10 +60,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The Class DbWireRecordStore is a wire component which is responsible to store
- * the received {@link WireRecord}. <br/>
- * <br/>
- * Also note that, every table name provided by DB Wire Record Store will be
- * prepended by {@code WR_}
+ * the received {@link WireRecord}.
  */
 public final class DbWireRecordStore implements WireEmitter, WireReceiver, ConfigurableComponent {
 
@@ -83,7 +76,9 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
 
     private static final String SQL_CREATE_TABLE = "CREATE TABLE IF NOT EXISTS {0} (TIMESTAMP BIGINT NOT NULL PRIMARY KEY);";
 
-    private static final String SQL_DELETE_RANGE_TABLE = "DELETE FROM {0} LIMIT {1};";
+    private static final String SQL_ROW_COUNT_TABLE = "SELECT COUNT(*) FROM {0};";
+
+    private static final String SQL_DELETE_RANGE_TABLE = "DELETE FROM {0} WHERE rownum() <= (SELECT count(*) FROM {0}) - {1};";
 
     private static final String SQL_DROP_COLUMN = "ALTER TABLE {0} DROP COLUMN {1};";
 
@@ -97,20 +92,11 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
 
     private volatile DbService dbService;
 
-    private final ScheduledExecutorService executorService;
-
     private DbWireRecordStoreOptions wireRecordStoreOptions;
-
-    /** The future handle of the thread pool executor service. */
-    private ScheduledFuture<?> tickHandle;
 
     private volatile WireHelperService wireHelperService;
 
     private WireSupport wireSupport;
-
-    public DbWireRecordStore() {
-        this.executorService = Executors.newSingleThreadScheduledExecutor();
-    }
 
     /**
      * Binds the DB service.
@@ -171,9 +157,11 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug(message.activatingStore());
         this.wireRecordStoreOptions = new DbWireRecordStoreOptions(properties);
-        this.dbHelper = DbServiceHelper.getInstance(this.dbService);
+        this.dbHelper = DbServiceHelper.of(this.dbService);
         this.wireSupport = this.wireHelperService.newWireSupport(this);
-        scheduleTruncation();
+
+        final String tableName = this.wireRecordStoreOptions.getTableName();
+        reconcileDB(tableName);
         logger.debug(message.activatingStoreDone());
     }
 
@@ -186,7 +174,9 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
     public void updated(final Map<String, Object> properties) {
         logger.debug(message.updatingStore() + properties);
         this.wireRecordStoreOptions = new DbWireRecordStoreOptions(properties);
-        scheduleTruncation();
+
+        final String tableName = this.wireRecordStoreOptions.getTableName();
+        reconcileDB(tableName);
         logger.debug(message.updatingStoreDone());
     }
 
@@ -198,34 +188,16 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
      */
     protected void deactivate(final ComponentContext componentContext) {
         logger.debug(message.deactivatingStore());
-        if (nonNull(this.tickHandle)) {
-            this.tickHandle.cancel(true);
-        }
-        this.executorService.shutdown();
         logger.debug(message.deactivatingStoreDone());
     }
 
     /**
-     * Schedule truncation of tables containing {@link WireRecord}s
+     * Truncates tables containing {@link WireRecord}s
      */
-    private void scheduleTruncation() {
-        final int cleanUpRate = this.wireRecordStoreOptions.getPeriodicCleanupRate();
+    private void truncate() {
         final int noOfRecordsToKeep = this.wireRecordStoreOptions.getNoOfRecordsToKeep();
-        // Cancel the current refresh view handle
-        if (nonNull(this.tickHandle)) {
-            this.tickHandle.cancel(true);
-        }
-        // schedule the truncation of collected wire records
-        if (cleanUpRate != 0) {
-            this.tickHandle = this.executorService.scheduleWithFixedDelay(new Runnable() {
 
-                /** {@inheritDoc} */
-                @Override
-                public void run() {
-                    DbWireRecordStore.this.clear(noOfRecordsToKeep);
-                }
-            }, cleanUpRate, cleanUpRate, TimeUnit.SECONDS);
-        }
+        truncate(noOfRecordsToKeep);
     }
 
     /**
@@ -234,7 +206,7 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
      * @param noOfRecordsToKeep
      *            the no of records to keep in the table
      */
-    private void clear(final int noOfRecordsToKeep) {
+    private void truncate(final int noOfRecordsToKeep) {
         final String tableName = this.wireRecordStoreOptions.getTableName();
         final String sqlTableName = this.dbHelper.sanitizeSqlTableAndColumnName(tableName);
         Connection conn = null;
@@ -251,8 +223,9 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
                     logger.info(message.truncatingTable(sqlTableName));
                     this.dbHelper.execute(MessageFormat.format(SQL_TRUNCATE_TABLE, sqlTableName));
                 } else {
-                    this.dbHelper
-                            .execute(MessageFormat.format(SQL_DELETE_RANGE_TABLE, sqlTableName, noOfRecordsToKeep));
+                    logger.info(message.partiallyEmptyingTable(sqlTableName));
+                    this.dbHelper.execute(MessageFormat.format(SQL_DELETE_RANGE_TABLE, sqlTableName,
+                            Integer.toString(noOfRecordsToKeep)));
                 }
             }
         } catch (final SQLException sqlException) {
@@ -261,6 +234,33 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
             this.dbHelper.close(rsTbls);
             this.dbHelper.close(conn);
         }
+    }
+
+    private int getTableSize() throws SQLException {
+        final String tableName = this.wireRecordStoreOptions.getTableName();
+        final String sqlTableName = this.dbHelper.sanitizeSqlTableAndColumnName(tableName);
+
+        Connection conn = null;
+        Statement stmt = null;
+        ResultSet rset = null;
+
+        int size = 0;
+        try {
+            conn = this.dbHelper.getConnection();
+            stmt = conn.createStatement();
+            rset = stmt.executeQuery(MessageFormat.format(SQL_ROW_COUNT_TABLE, sqlTableName));
+
+            rset.next();
+            size = rset.getInt(1);
+        } catch (final SQLException e) {
+            throw e;
+        } finally {
+            this.dbHelper.close(rset);
+            this.dbHelper.close(stmt);
+            this.dbHelper.close(conn);
+        }
+
+        return size;
     }
 
     /** {@inheritDoc} */
@@ -274,6 +274,14 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
     public synchronized void onWireReceive(final WireEnvelope wireEvelope) {
         requireNonNull(wireEvelope, message.wireEnvelopeNonNull());
         logger.debug(message.wireEnvelopeReceived() + this.wireSupport);
+
+        try {
+            if (getTableSize() >= this.wireRecordStoreOptions.getMaximumTableSize()) {
+                truncate();
+            }
+        } catch (SQLException e) {
+            logger.warn("Exception while trying to clean db");
+        }
 
         final List<WireRecord> records = wireEvelope.getRecords();
         for (WireRecord wireRecord : records) {
@@ -323,7 +331,23 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
                 reconcileColumns(tableName, wireRecord);
             }
         } catch (final SQLException ee) {
-            logger.error(message.errorStoring() + ee);
+            logger.error(message.errorStoring(), ee);
+        }
+    }
+
+    /**
+     * Tries to reconcile the database.
+     *
+     * @param tableName
+     *            the table name in the database that needs to be reconciled.
+     */
+    private void reconcileDB(final String tableName) {
+        try {
+            if (nonNull(tableName) && !tableName.isEmpty()) {
+                reconcileTable(tableName);
+            }
+        } catch (final SQLException ee) {
+            logger.error(message.errorStoring(), ee);
         }
     }
 
@@ -479,8 +503,8 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
             case BOOLEAN:
                 stmt.setBoolean(i, ((BooleanValue) value).getValue());
                 break;
-            case BYTE:
-                stmt.setByte(i, ((ByteValue) value).getValue());
+            case FLOAT:
+                stmt.setFloat(i, ((FloatValue) value).getValue());
                 break;
             case DOUBLE:
                 stmt.setDouble(i, ((DoubleValue) value).getValue());
@@ -495,9 +519,6 @@ public final class DbWireRecordStore implements WireEmitter, WireReceiver, Confi
                 byte[] byteArrayValue = ((ByteArrayValue) value).getValue();
                 InputStream is = new ByteArrayInputStream(byteArrayValue);
                 stmt.setBlob(i, is);
-                break;
-            case SHORT:
-                stmt.setShort(i, ((ShortValue) value).getValue());
                 break;
             case STRING:
                 stmt.setString(i, ((StringValue) value).getValue());

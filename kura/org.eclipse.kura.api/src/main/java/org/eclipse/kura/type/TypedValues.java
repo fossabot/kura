@@ -15,13 +15,16 @@ package org.eclipse.kura.type;
 
 import org.eclipse.kura.KuraRuntimeException;
 import org.eclipse.kura.annotation.Nullable;
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * The Class TypedValues is an utility class to quickly create different
  * {@link TypedValue}
  * 
  * @noextend This class is not intended to be extended by clients.
+ * @since 1.2
  */
+@ProviderType
 public final class TypedValues {
 
     private TypedValues() {
@@ -53,14 +56,14 @@ public final class TypedValues {
     }
 
     /**
-     * Creates new byte value.
+     * Creates new float value.
      *
      * @param value
-     *            the primitive byte value
-     * @return the byte value represented as {@link TypedValue}
+     *            the primitive float value
+     * @return the float value represented as {@link TypedValue}
      */
-    public static ByteValue newByteValue(final byte value) {
-        return new ByteValue(value);
+    public static FloatValue newFloatValue(final float value) {
+        return new FloatValue(value);
     }
 
     /**
@@ -97,17 +100,6 @@ public final class TypedValues {
     }
 
     /**
-     * Creates new short value.
-     *
-     * @param value
-     *            the primitive short value
-     * @return the short value represented as {@link TypedValue}
-     */
-    public static ShortValue newShortValue(final short value) {
-        return new ShortValue(value);
-    }
-
-    /**
      * Creates new string value.
      *
      * @param value
@@ -132,16 +124,14 @@ public final class TypedValues {
             return newBooleanValue((Boolean) value);
         } else if (value instanceof byte[]) {
             return newByteArrayValue((byte[]) value);
-        } else if (value instanceof Byte) {
-            return newByteValue((Byte) value);
+        } else if (value instanceof Float) {
+            return newFloatValue((Float) value);
         } else if (value instanceof Double) {
             return newDoubleValue((Double) value);
         } else if (value instanceof Integer) {
             return newIntegerValue((Integer) value);
         } else if (value instanceof Long) {
             return newLongValue((Long) value);
-        } else if (value instanceof Short) {
-            return newShortValue((Short) value);
         } else if (value instanceof String) {
             return newStringValue((String) value);
         }

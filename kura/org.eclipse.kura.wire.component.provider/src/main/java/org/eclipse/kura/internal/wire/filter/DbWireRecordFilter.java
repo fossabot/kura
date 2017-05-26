@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -133,7 +134,7 @@ public final class DbWireRecordFilter implements WireEmitter, WireReceiver, Conf
     protected void activate(final ComponentContext componentContext, final Map<String, Object> properties) {
         logger.debug(message.activatingFilter());
         this.options = new DbWireRecordFilterOptions(properties);
-        this.dbHelper = DbServiceHelper.getInstance(this.dbService);
+        this.dbHelper = DbServiceHelper.of(this.dbService);
         this.wireSupport = this.wireHelperService.newWireSupport(this);
         this.cacheExpirationInterval = this.options.getCacheExpirationInterval();
 
@@ -252,9 +253,13 @@ public final class DbWireRecordFilter implements WireEmitter, WireReceiver, Conf
             refreshCachedRecords();
         }
 
+        List<WireRecord> result;
         if (nonNull(this.lastRecords)) {
-            this.wireSupport.emit(this.lastRecords);
+            result = Collections.unmodifiableList(this.lastRecords);
+        } else {
+            result = Collections.unmodifiableList(new ArrayList<WireRecord>());
         }
+        this.wireSupport.emit(result);
     }
 
     private void refreshCachedRecords() {

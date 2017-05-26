@@ -6,15 +6,14 @@
 	<parent>
 		<groupId>org.eclipse.kura</groupId>
 		<artifactId>target-platform</artifactId>
-		<version>3.0.0-SNAPSHOT</version>
+		<version>3.1.0-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>p2-repo-equinox_3.11.1</artifactId>
-	<version>1.0.0</version>
 	<packaging>pom</packaging>
     
     <properties>
-        <equinox.download.url>http://ftp-stud.fht-esslingen.de/pub/Mirrors/eclipse/equinox/drops/R-Neon.1-201609071200/equinox-SDK-Neon.1.zip</equinox.download.url>
+        <equinox.download.url>https://s3-us-west-2.amazonaws.com/kura-repo/R-Neon.1-201609071200/equinox-SDK-Neon.1.zip</equinox.download.url>
     </properties>
 
 	<build>
@@ -168,16 +167,14 @@
 			</plugin>
 		</plugins>
 	</build>
-    
-    <profiles>
+	
+	<profiles>
         <profile>
             <!-- profile for falling back to non-mirror download links -->
             <id>no-mirror</id>
             <properties>
-                <equinox.download.url>http://download.eclipse.org/equinox/drops/R-Neon.1-201609071200/equinox-SDK-Neon.1.zip</equinox.download.url>
+                <equinox.download.url>http://archive.eclipse.org/equinox/drops/R-Neon.1-201609071200/equinox-SDK-Neon.1.zip</equinox.download.url>
             </properties>
         </profile>
-        
     </profiles>
-    
 </project>

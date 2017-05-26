@@ -55,15 +55,15 @@ public final class DbServiceHelper {
     }
 
     /**
-     * Gets the single instance of DB Service Helper.
+     * Creates instance of {@link DbServiceHelper}
      *
      * @param dbService
-     *            the DB service
-     * @return single instance of Service Helper
+     *            the {@link DbService}
+     * @return the instance of {@link DbServiceHelper}
      * @throws KuraRuntimeException
      *             if argument is null
      */
-    public static DbServiceHelper getInstance(final DbService dbService) {
+    public static DbServiceHelper of(final DbService dbService) {
         return new DbServiceHelper(dbService);
     }
 
@@ -165,12 +165,8 @@ public final class DbServiceHelper {
     }
 
     /**
-     * Perform basic SQL table name and column name validation on input string.
-     * This is to allow safe encoding of parameters that must contain quotes,
-     * while still protecting users from SQL injection on the table names and
-     * column names.
-     *
-     * (any disallowed character --> '_')
+     * Encloses the provided String between double quotes and escapes
+     * any double quote present in the string.
      *
      * @param string
      *            the string to be sanitized
@@ -181,7 +177,7 @@ public final class DbServiceHelper {
     public String sanitizeSqlTableAndColumnName(final String string) {
         requireNonNull(string, message.stringNonNull());
         logger.debug(message.sanitize() + string);
-        String sanitizedName = string.replaceAll("(?=[]\\[+&|!(){}^\"~*?:\\\\-])", "_");
+        final String sanitizedName = string.replaceAll("\"", "\"\"");
         return "\"" + sanitizedName + "\"";
     }
 }
