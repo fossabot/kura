@@ -188,6 +188,7 @@
                                             <fileset dir="${project.build.directory}/assembly">
                                                 <exclude name="bin/*.bat" />
                                                 <exclude name="bin/contrib/**" />
+                                                <exclude name="etc/org.ops4j.pax.logging.cfg" />
                                             </fileset>
                                         </copy>
                                     </target>
