@@ -125,12 +125,13 @@
                 <artifactId>karaf-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
+                	<ignoreDependencyFlag>true</ignoreDependencyFlag>
                     <startupFeatures>
                         <feature>eventadmin</feature>
                     </startupFeatures>
                     
                     <bootFeatures>
-                        <feature>standard</feature>
+                        <feature>minimal</feature>
                         <feature>webconsole</feature>
 
                         <feature>kura-runtime</feature>

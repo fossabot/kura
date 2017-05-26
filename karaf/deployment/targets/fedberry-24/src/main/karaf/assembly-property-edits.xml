@@ -9,6 +9,13 @@
             <value>equinox</value>
         </edit>
         
+        <edit>
+            <file>config.properties</file>
+            <operation>put</operation>
+            <key>karaf.clean.cache</key>
+            <value>true</value>
+        </edit>
+        
      	<edit>
      		<file>system.properties</file>
      		<operation>put</operation>
