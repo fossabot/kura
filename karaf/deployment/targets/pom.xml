@@ -131,7 +131,7 @@
                     </startupFeatures>
                     
                     <bootFeatures>
-                        <feature>minimal</feature>
+                        <feature>standard</feature>
                         <feature>webconsole</feature>
 
                         <feature>kura-runtime</feature>
