@@ -5,13 +5,28 @@
     <feature name="kura-runtime">
 
         <bundle dependency="true">mvn:org.osgi/org.osgi.service.wireadmin/1.0.1</bundle>
-        <bundle start-level="10">mvn:org.eclipse.platform/org.eclipse.equinox.wireadmin/1.0.600</bundle>
+        <bundle start-level="10">mvn:org.eclipse.platform/org.eclipse.equinox.wireadmin/${org.eclipse.equinox.wireadmin.version}</bundle>
 
-        <bundle dependency="true">mvn:commons-io/commons-io/2.4</bundle>
+        <bundle dependency="true">mvn:commons-io/commons-io/${org.apache.commons.io.version}</bundle>
         <bundle dependency="true">mvn:org.osgi/org.osgi.service.repository/1.1.0</bundle>
-        <bundle dependency="true">mvn:com.eclipsesource.minimal-json/minimal-json/0.9.4</bundle>
+        <bundle dependency="true">mvn:com.eclipsesource.minimal-json/minimal-json/${com.eclipsesource.minimal-json.version}</bundle>
 
-        <bundle dependency="true">mvn:org.apache.felix/org.apache.felix.gogo.runtime/0.10.0</bundle>
+        <bundle dependency="true">mvn:org.apache.felix/org.apache.felix.gogo.runtime/${org.apache.felix.gogo.runtime.version}</bundle>
+        
+		<bundle start-level="80">mvn:org.apache.commons/commons-lang3/${org.apache.commons.lang3.version}</bundle>
+		<bundle start-level="80">mvn:org.apache.commons/commons-exec/${commons-exec.version}</bundle>
+		<bundle start-level="80">mvn:org.eclipse.kura/org.usb4java/${org.usb4java.version}</bundle>
+		<bundle start-level="80">mvn:org.eclipse.kura/org.eclipse.soda.dk.comm/${org.eclipse.soda.dk.comm.version}</bundle>
+        <bundle start-level="80">mvn:org.eclipse.kura/usb4java-javax/${usb4java-javax.version}</bundle>
+        <bundle start-level="80">mvn:org.eclipse.platform/org.eclipse.equinox.io/${org.eclipse.equinox.io.version}</bundle>
+        <bundle start-level="80">mvn:org.eclipse.platform/org.eclipse.equinox.util/${org.eclipse.equinox.util.version}</bundle>
+        <bundle dependency="true">mvn:org.osgi/org.osgi.service.io/1.0.0</bundle>
+        <bundle dependency="true">mvn:org.osgi/org.osgi.util.measurement/1.0.1</bundle>
+        <bundle dependency="true">mvn:org.osgi/org.osgi.util.position/1.0.1</bundle>
+        <bundle dependency="true">mvn:org.osgi/org.osgi.service.deploymentadmin/1.1.0</bundle>
+        <bundle start-level="80">mvn:org.apache.felix/org.apache.felix.deploymentadmin/${org.apache.felix.deploymentadmin.version}</bundle>
+        <bundle start-level="80">mvn:org.apache.felix/org.apache.felix.dependencymanager/${org.apache.felix.dependencymanager.version}</bundle>
+        <bundle start-level="80">mvn:org.hsqldb/hsqldb/${org.hsqldb.hsqldb.version}</bundle>
 
         <feature dependency="true">scr</feature>
         <feature dependency="true">eventadmin</feature>
