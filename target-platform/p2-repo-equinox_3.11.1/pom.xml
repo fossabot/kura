@@ -53,6 +53,11 @@
                                     <version>${org.apache.felix.dependencymanager.version}</version>
                                 </artifactItem>
                                 <artifactItem>
+                                    <groupId>org.apache.felix</groupId>
+                                    <artifactId>org.apache.felix.deploymentadmin</artifactId>
+                                    <version>${org.apache.felix.deploymentadmin.version}</version>
+                                </artifactItem>
+                                <artifactItem>
                                     <groupId>org.knowhowlab</groupId>
                                     <artifactId>org.knowhowlab.osgi.monitoradmin</artifactId>
                                     <version>${org.knowhowlab.osgi.monitoradmin.version}</version>
@@ -61,7 +66,7 @@
                                     <groupId>org.eclipse.platform</groupId>
                                     <artifactId>org.eclipse.equinox.wireadmin</artifactId>
                                     <version>${org.eclipse.equinox.wireadmin.version}</version>
-                                </artifactItem>org.apache.felix/org.apache.felix.gogo.runtime
+                                </artifactItem>
                                 <artifactItem>
                                     <groupId>osgi</groupId>
                                     <artifactId>osgi.cmpn</artifactId>
@@ -82,6 +87,11 @@
                                     <artifactId>org.eclipse.equinox.util</artifactId>
                                     <version>${org.eclipse.equinox.util.version}</version>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>org.eclipse.platform</groupId>
+                                    <artifactId>org.eclipse.osgi.services</artifactId>
+                                    <version>${org.eclipse.osgi.services.version}</version>
+                                </artifactItem>
 							</artifactItems>
 							<stripVersion>true</stripVersion>
 							<outputDirectory>${project.basedir}/target/source/plugins</outputDirectory>
@@ -90,28 +100,10 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<!--  rename bundles with version appended -->
-				<artifactId>maven-antrun-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>setup</id>
-						<phase>process-resources</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-						<configuration>
-							<tasks>
-							    <move file="target/source/plugins/org.apache.felix.dependencymanager.jar" tofile="target/source/plugins/org.apache.felix.dependencymanager_${org.apache.felix.dependencymanager.version}.jar"/>
-							    <move file="target/source/plugins/org.knowhowlab.osgi.monitoradmin.jar" tofile="target/source/plugins/org.knowhowlab.osgi.monitoradmin_${org.knowhowlab.osgi.monitoradmin.version}.jar"/>
-							    <move file="target/source/plugins/org.eclipse.equinox.wireadmin.jar" tofile="target/source/plugins/org.eclipse.equinox.wireadmin_${org.eclipse.equinox.wireadmin.version}.jar"/>
-								<move file="target/source/plugins/osgi.cmpn.jar" tofile="target/source/plugins/osgi.cmpn_${osgi.cmpn.version}.jar"/>
-								<move file="target/source/plugins/org.apache.felix.gogo.runtime.jar" tofile="target/source/plugins/org.apache.felix.gogo.runtime_${org.apache.felix.gogo.runtime.version}.jar"/>
-								<move file="target/source/plugins/org.eclipse.equinox.io.jar" tofile="target/source/plugins/org.eclipse.equinox.io_${org.eclipse.equinox.io.version}.jar"/>
-								<move file="target/source/plugins/org.eclipse.equinox.util.jar" tofile="target/source/plugins/org.eclipse.equinox.util_${org.eclipse.equinox.util.version}.jar"/>
-							</tasks>
-						</configuration>
-					</execution>
-					<execution>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
                         <id>download-equinox</id>
                         <phase>generate-resources</phase>
                         <goals>
@@ -119,14 +111,12 @@
                         </goals>
                         <configuration>
                             <target>
-                                <mkdir dir="${project.build.directory}/download"/>
-                                <!--
-                                  - direct mirror link: http://www.eclipse.org/downloads/download.php?file=/equinox/drops/R-Neon.1-201609071200/equinox-SDK-Neon.1.zip&amp;r=1 
-                                  -->
-                                <get src="${equinox.download.url}" dest="${project.build.directory}/download/equinox.zip" usetimestamp="true" />
-                                
-                                <delete dir="${project.build.directory}/source/plugins"/>
-                                <mkdir dir="${project.build.directory}/source/plugins"/>
+                                <mkdir dir="${project.build.directory}/download" />
+                                <get src="${equinox.download.url}" dest="${project.build.directory}/download/equinox.zip"
+                                    usetimestamp="true" />
+
+                                <delete dir="${project.build.directory}/source/plugins" />
+                                <mkdir dir="${project.build.directory}/source/plugins" />
                                 <unzip src="${project.build.directory}/download/equinox.zip" dest="${project.build.directory}/source/plugins">
                                     <patternset>
                                         <exclude name="plugins/org.eclipse.osgi.compatibility.state*.jar"/>
@@ -136,10 +126,12 @@
                                         <exclude name="plugins/org.eclipse.equinox.console.ssh*.jar"/>
                                         <exclude name="plugins/org.eclipse.equinox.simpleconfig*.jar"/>
                                         <exclude name="plugins/org.apache.felix.dependencymanager*.jar"/>
+                                        <exclude name="plugins/org.apache.felix.deploymentadmin*.jar"/>
                                         <exclude name="plugins/org.eclipse.equinox.wireadmin*.jar"/>
                                         <exclude name="plugins/org.apache.felix.gogo.runtime*.jar"/>
                                         <exclude name="plugins/org.eclipse.equinox.io*.jar"/>
                                         <exclude name="plugins/org.eclipse.equinox.util*.jar"/>
+                                        <exclude name="plugins/org.eclipse.osgi.services*.jar"/>
                                                                                 
                                         <include name="plugins/org.eclipse.equinox.launcher_*.jar"/>
                                         <include name="plugins/org.eclipse.equinox.launcher.source_*.jar"/>
@@ -155,29 +147,50 @@
                                         
                                         <include name="plugins/org.eclipse.jetty*.jar"/>
                                     </patternset>
-                                    <mapper type="flatten"/>
+                                    <mapper type="flatten" />
                                 </unzip>
                             </target>
                         </configuration>
                     </execution>
-					<execution>
-						<id>install-equinox</id>
-						<phase>install</phase>
-						<goals>
-							<goal>run</goal>
-						</goals>
-						<configuration>
-							<target>
-								<delete dir="../../kura/target-definition/equinox_3.11.1/" />
-								<mkdir dir="../../kura/target-definition/equinox_3.11.1/repository" />
-								<copy todir="../../kura/target-definition/equinox_3.11.1/repository">
-									<fileset dir="${project.build.directory}/repository" />
-								</copy>
-							</target>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
+                    <execution>
+                        <id>setup</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <tasks>
+                                <move file="target/source/plugins/org.apache.felix.dependencymanager.jar" tofile="target/source/plugins/org.apache.felix.dependencymanager_${org.apache.felix.dependencymanager.version}.jar"/>
+                                <move file="target/source/plugins/org.apache.felix.deploymentadmin.jar" tofile="target/source/plugins/org.apache.felix.deploymentadmin_${org.apache.felix.deploymentadmin.version}.jar"/>
+							    <move file="target/source/plugins/org.knowhowlab.osgi.monitoradmin.jar" tofile="target/source/plugins/org.knowhowlab.osgi.monitoradmin_${org.knowhowlab.osgi.monitoradmin.version}.jar"/>
+							    <move file="target/source/plugins/org.eclipse.equinox.wireadmin.jar" tofile="target/source/plugins/org.eclipse.equinox.wireadmin_${org.eclipse.equinox.wireadmin.version}.jar"/>
+								<move file="target/source/plugins/osgi.cmpn.jar" tofile="target/source/plugins/osgi.cmpn_${osgi.cmpn.version}.jar"/>
+								<move file="target/source/plugins/org.apache.felix.gogo.runtime.jar" tofile="target/source/plugins/org.apache.felix.gogo.runtime_${org.apache.felix.gogo.runtime.version}.jar"/>
+								<move file="target/source/plugins/org.eclipse.equinox.io.jar" tofile="target/source/plugins/org.eclipse.equinox.io_${org.eclipse.equinox.io.version}.jar"/>
+								<move file="target/source/plugins/org.eclipse.equinox.util.jar" tofile="target/source/plugins/org.eclipse.equinox.util_${org.eclipse.equinox.util.version}.jar"/>
+								<move file="target/source/plugins/org.eclipse.osgi.services.jar" tofile="target/source/plugins/org.eclipse.osgi.services_${org.eclipse.osgi.services.version}.jar"/>
+							
+                            </tasks>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>install-equinox</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <delete dir="../../kura/target-definition/equinox_3.11.1/" />
+                                <mkdir dir="../../kura/target-definition/equinox_3.11.1/repository" />
+                                <copy todir="../../kura/target-definition/equinox_3.11.1/repository">
+                                    <fileset dir="${project.build.directory}/repository" />
+                                </copy>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
 			<plugin>
 				<groupId>org.eclipse.tycho.extras</groupId>
 				<artifactId>tycho-p2-extras-plugin</artifactId>
