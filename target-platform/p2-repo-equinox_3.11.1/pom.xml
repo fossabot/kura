@@ -66,12 +66,12 @@
                                     <groupId>org.eclipse.platform</groupId>
                                     <artifactId>org.eclipse.equinox.wireadmin</artifactId>
                                     <version>${org.eclipse.equinox.wireadmin.version}</version>
-                                </artifactItem>
+                                </artifactItem><!--
                                 <artifactItem>
                                     <groupId>osgi</groupId>
                                     <artifactId>osgi.cmpn</artifactId>
                                     <version>${osgi.cmpn.version}</version>
-                                </artifactItem>
+                                </artifactItem>-->
                                 <artifactItem>
                                     <groupId>org.apache.felix</groupId>
                                     <artifactId>org.apache.felix.gogo.runtime</artifactId>
@@ -164,7 +164,7 @@
                                 <move file="target/source/plugins/org.apache.felix.deploymentadmin.jar" tofile="target/source/plugins/org.apache.felix.deploymentadmin_${org.apache.felix.deploymentadmin.version}.jar"/>
 							    <move file="target/source/plugins/org.knowhowlab.osgi.monitoradmin.jar" tofile="target/source/plugins/org.knowhowlab.osgi.monitoradmin_${org.knowhowlab.osgi.monitoradmin.version}.jar"/>
 							    <move file="target/source/plugins/org.eclipse.equinox.wireadmin.jar" tofile="target/source/plugins/org.eclipse.equinox.wireadmin_${org.eclipse.equinox.wireadmin.version}.jar"/>
-								<move file="target/source/plugins/osgi.cmpn.jar" tofile="target/source/plugins/osgi.cmpn_${osgi.cmpn.version}.jar"/>
+								<!--<move file="target/source/plugins/osgi.cmpn.jar" tofile="target/source/plugins/osgi.cmpn_${osgi.cmpn.version}.jar"/>-->
 								<move file="target/source/plugins/org.apache.felix.gogo.runtime.jar" tofile="target/source/plugins/org.apache.felix.gogo.runtime_${org.apache.felix.gogo.runtime.version}.jar"/>
 								<move file="target/source/plugins/org.eclipse.equinox.io.jar" tofile="target/source/plugins/org.eclipse.equinox.io_${org.eclipse.equinox.io.version}.jar"/>
 								<move file="target/source/plugins/org.eclipse.equinox.util.jar" tofile="target/source/plugins/org.eclipse.equinox.util_${org.eclipse.equinox.util.version}.jar"/>
