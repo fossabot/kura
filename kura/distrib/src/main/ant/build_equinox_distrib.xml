@@ -61,7 +61,7 @@
 		<replace file="${project.build.directory}/${build.output.name}/kura.properties" token="{kura.symlink}" value="${kura.symlink}"/>
 
 
-		<condition property="kura.osgi.repo" value="../target-definition/equinox_3.11.1/repository">
+		<condition property="kura.osgi.repo" value="../../target-platform/p2-repo-equinox_3.11.1/target/source">
 			<or>
 				<not>
 					<isset property="kura.osgi"/>
@@ -187,7 +187,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Djava.security.policy=${DIR}/kura/jdk.dio.policy \
         -Djdk.dio.registry=${DIR}/kura/jdk.dio.properties \
         -Djdk.tls.trustNameService=true \
-        -jar ${DIR}/plugins/org.eclipse.osgi_3.11.1.v20160708-1632.jar \
+        -jar ${DIR}/plugins/org.eclipse.osgi_${org.eclipse.osgi.version}.jar \
         -configuration  /tmp/.kura/configuration \
         -console \
         -consoleLog
@@ -229,7 +229,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Djava.security.policy=${DIR}/kura/jdk.dio.policy \
         -Djdk.dio.registry=${DIR}/kura/jdk.dio.properties \
         -Djdk.tls.trustNameService=true \
-        -jar ${DIR}/plugins/org.eclipse.osgi_3.11.1.v20160708-1632.jar \
+        -jar ${DIR}/plugins/org.eclipse.osgi_${org.eclipse.osgi.version}.jar \
         -configuration  /tmp/.kura/configuration \
         -console \
         -consoleLog
@@ -269,7 +269,7 @@ if [ -z "$KURA_RUNNING" ] ; then
         -Djava.security.policy=${DIR}/kura/jdk.dio.policy \
         -Djdk.dio.registry=${DIR}/kura/jdk.dio.properties \
         -Djdk.tls.trustNameService=true \
-        -jar ${DIR}/plugins/org.eclipse.osgi_3.11.1.v20160708-1632.jar \
+        -jar ${DIR}/plugins/org.eclipse.osgi_${org.eclipse.osgi.version}.jar \
         -configuration  /tmp/.kura/configuration \
         -console 5002 \
         -consoleLog >> /var/log/kura-console.log 2>> /var/log/kura-console.log &
@@ -683,7 +683,7 @@ Resource-Processor: org.eclipse.kura.deployment.customizer.upgrade.rp.UpgradeScr
         <replace file="${project.build.directory}/${build.output.name}/kura.properties" token="{kura.symlink}" value="${kura.symlink}"/>
 
     	
-    	<condition property="kura.osgi.repo" value="../target-definition/equinox_3.11.1/repository">
+    	<condition property="kura.osgi.repo" value="../../target-platform/p2-repo-equinox_3.11.1/target/source">
     		<or>
     			<not>
     				<isset property="kura.osgi"/>
