@@ -122,6 +122,8 @@
         <!-- BND baseline plugin -->
         <bnd.baseline.version>3.4.0-SNAPSHOT</bnd.baseline.version>
         <bnd.baseline.continueOnError>false</bnd.baseline.continueOnError>
+        
+        <maven.deploy.skip.prop>false</maven.deploy.skip.prop>
     </properties>
 
     <distributionManagement>
@@ -547,6 +549,46 @@
                                     </condition>
                                 </fail>
                             </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+                        <plugin>
+                <groupId>org.honton.chas</groupId>
+                <artifactId>exists-maven-plugin</artifactId>
+                <version>0.0.2</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>remote</goal>
+                        </goals>
+                        <configuration>
+                            <skipIfSnapshot>true</skipIfSnapshot>
+                            <property>maven.deploy.skip.prop</property>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>1.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce-property</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireProperty>
+                                    <property>maven.deploy.skip.prop</property>
+                                    <message>Property should be false</message>
+                                    <regex>false</regex>
+                                </requireProperty>
+                            </rules>
+                            <fail>true</fail>
                         </configuration>
                     </execution>
                 </executions>
