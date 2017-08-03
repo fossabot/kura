@@ -59,6 +59,7 @@ import org.gwtbootstrap3.client.ui.NavPills;
 import org.gwtbootstrap3.client.ui.Panel;
 import org.gwtbootstrap3.client.ui.PanelBody;
 import org.gwtbootstrap3.client.ui.PanelHeader;
+import org.gwtbootstrap3.client.ui.Row;
 import org.gwtbootstrap3.client.ui.TabListItem;
 import org.gwtbootstrap3.client.ui.TextBox;
 import org.gwtbootstrap3.client.ui.constants.IconSize;
@@ -92,6 +93,8 @@ public class EntryClassUi extends Composite {
     static Modal errorModal;
     @UiField
     Label footerLeft;
+    @UiField
+    Row footerCenterRow;
     @UiField
     Label footerCenter;
     @UiField
@@ -293,8 +296,10 @@ public class EntryClassUi extends Composite {
 
         this.footerRight.setText(gwtSession.getKuraVersion());
 
+        footerCenterRow.setVisible(false);
         if (gwtSession.isDevelopMode()) {
             this.footerCenter.setText(MSGS.developmentMode());
+            footerCenterRow.setVisible(true);
         }
     }
 
