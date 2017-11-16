@@ -25,6 +25,7 @@ import org.osgi.annotation.versioning.ProviderType;
  * @noimplement This interface is not intended to be implemented by clients.
  * @since 1.2
  */
+@Deprecated
 @ProviderType
 public interface WireService {
 

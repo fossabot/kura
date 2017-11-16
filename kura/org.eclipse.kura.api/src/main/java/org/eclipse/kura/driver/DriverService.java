@@ -59,4 +59,7 @@ public interface DriverService {
      */
     public List<Driver> listDrivers();
 
+    DriverDescriptor getDriverDescriptor(String driverPid);
+
+    List<DriverDescriptor> listDriverDescriptors();
 }
